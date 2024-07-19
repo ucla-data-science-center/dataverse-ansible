@@ -8,7 +8,7 @@ dataverse_repo: https://github.com/IQSS/dataverse.git
 # dataverse_installer_url: https://example.com/path/to/dvinstall.zip
 
 # set this to true for troubleshooting
-any_errors_fatal: false
+any_errors_fatal: true
 
 apache:
   enabled: true
@@ -127,7 +127,7 @@ dataverse:
        iconUrl: https://licensebuttons.net/l/by-sa/4.0/88x31.png
        active: true
        sortOrder: 7
-  copyright: "Your Institution"
+  copyright: "UC Regents"
   counter:
     enabled: false
     #geoipdir: maxmind_geoip
