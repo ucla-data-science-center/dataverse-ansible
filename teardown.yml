@@ -1,0 +1,203 @@
+---
+- name: Teardown Dataverse instance
+  hosts: all
+  become: yes
+  vars_files:
+    - defaults/main.yml  # Adjust as needed
+    - vault.yml  # Sensitive data
+
+  tasks:
+    - name: Stop Dataverse service
+      service:
+        name: dataverse
+        state: stopped
+      ignore_errors: yes
+
+    - name: Stop Payara service
+      service:
+        name: payara
+        state: stopped
+      ignore_errors: yes
+
+    - name: Stop Apache service on RedHat/Rocky
+      service:
+        name: httpd
+        state: stopped
+      when: ansible_os_family == "RedHat"
+      ignore_errors: yes
+
+    - name: Stop Apache service on Debian
+      service:
+        name: apache2
+        state: stopped
+      when: ansible_os_family == "Debian"
+      ignore_errors: yes
+
+    - name: Stop Shibboleth service
+      service:
+        name: shibd
+        state: stopped
+      ignore_errors: yes
+
+    - name: Stop PostgreSQL service on RedHat/Rocky
+      service:
+        name: 'postgresql-{{ db.postgres.version }}'
+        state: stopped
+      when: db.use_rds == false and ansible_os_family == "RedHat"
+      ignore_errors: yes
+
+    - name: Stop PostgreSQL service on Debian
+      service:
+        name: postgresql
+        state: stopped
+      when: db.use_rds == false and ansible_os_family == "Debian"
+      ignore_errors: yes
+
+    - name: Backup Dataverse installation directory
+      archive:
+        path: /opt/dataverse
+        dest: /backups/dataverse_backup.tar.gz
+      ignore_errors: yes
+
+    - name: Remove Dataverse installation directory
+      file:
+        path: /opt/dataverse
+        state: absent
+
+    - name: Backup PostgreSQL database
+      postgresql_db:
+        name: "{{ db.postgres.name }}"
+        state: dump
+        target: /backups/dvndb_backup.sql
+      become_user: postgres
+      ignore_errors: yes
+
+    - name: Drop PostgreSQL database
+      postgresql_db:
+        name: "{{ db.postgres.name }}"
+        state: absent
+      become_user: postgres
+
+    - name: Delete Solr core data
+      file:
+        path: /var/solr/data/dataverse
+        state: absent
+
+    - name: Remove Payara installation directory
+      file:
+        path: /usr/local/payara
+        state: absent
+
+    - name: Remove Apache virtual host configuration
+      file:
+        path: /etc/httpd/sites-available/dataverse.conf
+        state: absent
+
+    - name: Restart Apache service on RedHat/Rocky
+      service:
+        name: httpd
+        state: restarted
+      when: ansible_os_family == "RedHat"
+      ignore_errors: yes
+
+    - name: Restart Apache service on Debian
+      service:
+        name: apache2
+        state: restarted
+      when: ansible_os_family == "Debian"
+      ignore_errors: yes
+
+    - name: Clean up system users and groups
+      user:
+        name: dataverse
+        state: absent
+      ignore_errors: yes
+
+    - name: Remove backup files
+      file:
+        path: /backups/dataverse_backup.tar.gz
+        state: absent
+
+    - name: Remove PostgreSQL backup
+      file:
+        path: /backups/dvndb_backup.sql
+        state: absent
+      ignore_errors: yes
+
+    - name: Remove Dataverse miscellaneous files directory
+      file:
+        path: '{{ dataverse_misc_files_dir }}'
+        state: absent
+
+    - name: Remove Solr installation directory
+      file:
+        path: /usr/local/solr
+        state: absent
+
+    - name: Remove sample data directory
+      file:
+        path: /tmp/sampledata
+        state: absent
+
+    - name: Remove custom sample data directory
+      file:
+        path: '{{ custom_sampledata.custom_sampledir }}'
+        state: absent
+
+    - name: Remove Java installation directory
+      file:
+        path: '{{ java_home }}'
+        state: absent
+
+    - name: Remove Docker configuration
+      file:
+        path: /etc/docker
+        state: absent
+
+    - name: Remove Grafana configuration
+      file:
+        path: /usr/local/grafana
+        state: absent
+
+    - name: Remove LocalStack data directory
+      file:
+        path: /tmp/localstack/data
+        state: absent
+
+    - name: Remove MinIO project location
+      file:
+        path: /home/dataverse/minio
+        state: absent
+
+    - name: Remove Prometheus configuration
+      file:
+        path: /usr/local/prometheus
+        state: absent
+
+    - name: Remove Rserve work directory
+      file:
+        path: /tmp/Rserv
+        state: absent
+
+    - name: Remove Shibboleth configuration
+      file:
+        path: /etc/shibboleth
+        state: absent
+
+    - name: Remove ORCID configuration
+      file:
+        path: /etc/orcid
+        state: absent
+
+    - name: Remove extra certificates
+      file:
+        path: /path/to/extra/certificates  # Update with the correct path
+        state: absent
+
+    - name: Remove additional configuration files
+      file:
+        path: /path/to/configuration/file  # Update with the correct paths
+        state: absent
+      with_items:
+        - /etc/dataverse/config.json
+        - /etc/dataverse/another_config.xml
