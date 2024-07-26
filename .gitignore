@@ -2,3 +2,4 @@ venv
 .vagrant/
 /.idea
 /*.iml
+inventory_ec2
