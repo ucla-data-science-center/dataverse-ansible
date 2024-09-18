@@ -217,7 +217,7 @@ dataverse:
   jacoco:
     enabled: false
     home: /tmp/jacoco
-    version: 0.8.7
+    version: 0.8.12
   file_fixity_checksum_algorithm: "MD5"
   memheap: 4096
   options:
@@ -258,6 +258,7 @@ dataverse:
   unittests:
     enabled: false
     argument: '-DcompilerArgument=-Xlint:unchecked test -P all-unit-tests'
+  uploads_dir: /tmp
   usermgmtkey: burrito
   deployment:
     upgrade_only: false

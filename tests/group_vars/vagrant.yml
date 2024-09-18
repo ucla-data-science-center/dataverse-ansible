@@ -157,7 +157,7 @@ dataverse:
   jacoco:
     enabled: false
     home: /tmp/jacoco
-    version: 0.8.6
+    version: 0.8.12
   language:
     enabled: false
     languages:
@@ -254,6 +254,7 @@ dataverse:
   unittests:
     enabled: true
     argument: '-DcompilerArgument=-Xlint:unchecked test -P all-unit-tests'
+  uploads_dir: /tmp
   usermgmtkey: burrito
   deployment:
     upgrade_only: false
@@ -417,7 +418,7 @@ s3:
 
 schemaspy:
   enabled: false
-  jarurl: https://github.com/schemaspy/schemaspy/releases/download/v6.1.0/schemaspy-6.1.0.jar
+  jarurl: https://github.com/schemaspy/schemaspy/releases/download/v6.2.4/schemaspy-6.2.4.jar
 
 shibboleth:
   enabled: false
