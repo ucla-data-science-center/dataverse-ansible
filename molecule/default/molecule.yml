@@ -60,7 +60,7 @@ provisioner:
             allow_lookup: false
             blocked_endpoints: "admin,test"
             blocked_policy: "localhost-only"
-            location: "http://localhost:8080/api"
+            location: "http://127.0.0.1:8080/api"
             test_suite: false
           branding:
             enabled: false

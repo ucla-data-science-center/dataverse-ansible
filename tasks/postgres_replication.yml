@@ -39,7 +39,7 @@
    - firewall=='ufw'
 
 - name: create replication postgres user, set permissions
-  postgresql_user:
+  community.general.postgresql_user:
     db: '{{ db.postgres.name }}'
     name: 'rep'
     password: '{{ db.postgres.replication.pass }}'
