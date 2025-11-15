@@ -6,27 +6,16 @@ inventory_ec2
 .DS_Store
 
 
-### ucla local 
+### ucla local
 
-# Conda environment artifacts
-.env/
+# uv virtual environment
 .venv/
-conda-meta/
-*.conda
-*.egg-info/
 
 # Python bytecode
 __pycache__/
 *.py[cod]
 *.pyo
-
-# Pip-tools generated lockfile (optional to ignore)
-# If you want reproducibility, keep this file checked in.
-# If you want to force all devs to recompile, uncomment below:
-# requirements.txt
-
-# pip-sync temporary install log
-pip-log.txt
+*.egg-info/
 
 # Molecule test artifacts
 .molecule/

@@ -10,18 +10,16 @@ This is an Ansible role for deploying [Dataverse](https://dataverse.org), a rese
 
 ## Development Environment Setup
 
-This project uses Conda + pip-tools for Python dependency management, and Molecule with Docker for testing.
+This project uses [uv](https://docs.astral.sh/uv/) for Python dependency management, and Molecule with Docker for testing.
 
 ### Initial Setup
 
 ```bash
-# Create conda environment
-conda env create -f environment.yml
-conda activate dataverse-ansible
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install Python dependencies
-pip-compile requirements.in
-pip-sync
+# Set up development environment (installs Python 3.11, creates venv, installs deps)
+uv sync
 
 # Install Ansible collections (vendored locally)
 make bootstrap
@@ -29,25 +27,35 @@ make bootstrap
 
 The `make bootstrap` command installs vendored collections from `collections/requirements.yml` into `./collections`. This project vendors specific versions of `community.general` (11.2.1) and `community.postgresql` (4.1.0).
 
+**Key files:**
+- `pyproject.toml` - Dependency specifications
+- `uv.lock` - Locked dependency versions (commit this!)
+- `.python-version` - Python version (3.11)
+- `.venv/` - Virtual environment (git-ignored)
+
 ## Testing with Molecule
 
 ### Run Full Test Cycle
 ```bash
-molecule test -s rocky9
+uv run molecule test -s rocky9
 ```
 
 ### Iterative Development
 ```bash
 # Start/create the container and run the playbook
-molecule converge -s rocky9
+uv run molecule converge -s rocky9
 
 # Open a shell in the running container
-molecule login -s rocky9
+uv run molecule login -s rocky9
 
 # Destroy the container (required between test runs due to non-idempotency)
-molecule destroy -s rocky9
+uv run molecule destroy -s rocky9
 # or
-molecule reset -s rocky9
+uv run molecule reset -s rocky9
+
+# Alternatively, activate the venv and run commands directly
+source .venv/bin/activate
+molecule converge -s rocky9
 ```
 
 Dataverse will be accessible at `http://localhost:8080` after a successful converge.
@@ -211,6 +219,26 @@ Edit `molecule/rocky9/molecule.yml` published_ports to use a different host port
 ### Non-Idempotent Errors
 The Dataverse installer cannot be run twice. Destroy and recreate:
 ```bash
-molecule destroy -s rocky9
-molecule converge -s rocky9
+uv run molecule destroy -s rocky9
+uv run molecule converge -s rocky9
+```
+
+### Dependency Management
+
+**Add a new dependency:**
+```bash
+uv add package-name
+# or with version
+uv add ansible-core@2.17.0
+```
+
+**Update dependencies:**
+```bash
+uv lock --upgrade
+uv sync
+```
+
+**After pulling changes:**
+```bash
+uv sync  # Syncs .venv with uv.lock
 ```

@@ -9,56 +9,67 @@ These instructions assume:
     cd dataverse-ansible
     ```
 
-- You have [Conda](https://docs.conda.io/en/latest/miniconda.html) installed (e.g. via [Miniforge](https://github.com/conda-forge/miniforge)).
 - Docker is installed and running on your system.
 
 ---
 
-### 1. Create the Conda Environment
+### 1. Install uv
 
-To create a consistent development environment using `pip-tools`:
+[uv](https://docs.astral.sh/uv/) is a fast Python package and project manager that handles everything: Python installation, virtual environments, and dependency management.
 
-    ```bash
-    conda env create -f environment.yml
-    conda activate dataverse-ansible
-    ```
+**macOS/Linux:**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
 
-This will install:
+**Windows:**
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
 
-- Python 3.11
-- `pip-tools` (to manage Python packages via lockfiles)
+**Or install via Homebrew (macOS):**
+```bash
+brew install uv
+```
 
----
-
-### 2. Compile and Install Python Dependencies
-
-This project uses [`pip-tools`](https://pip-tools.readthedocs.io/) for dependency management. After activating the environment:
-
-    ```bash
-    pip-compile requirements.in
-    pip-sync
-    ```
-
-This will install:
-
-- `ansible-core`
-- `molecule`
-- `molecule-docker`
-- `docker` (Python SDK)
-
-> You only need to run `pip-compile` again if `requirements.in` changes. Use `pip-sync` to reinstall the locked dependencies.
+After installation, restart your terminal or run:
+```bash
+source ~/.bashrc  # or ~/.zshrc
+```
 
 ---
 
-### Optional: Manual Environment Creation
+### 2. Set Up the Development Environment
 
-If you prefer not to use `environment.yml` or `pip-tools`, you can manually create and install dependencies:
+uv will automatically:
+- Install Python 3.11 (if not already available)
+- Create a virtual environment in `.venv`
+- Install all dependencies from `pyproject.toml`
 
-    ```bash
-    conda create -n dataverse-ansible python=3.11 -y
-    conda activate dataverse-ansible
-    pip install ansible-core molecule molecule-docker docker
-    ```
+```bash
+uv sync
+```
+
+This installs:
+- `ansible-core` (2.16.6)
+- `molecule` (24.2.1)
+- `molecule-docker` (2.1.0)
+- `docker` Python SDK
+- All transitive dependencies
+
+---
+
+### 3. Install Ansible Collections
+
+The project vendors specific versions of Ansible collections locally:
+
+```bash
+make bootstrap
+```
+
+This installs:
+- `community.general` (11.2.1)
+- `community.postgresql` (4.1.0)
 
 ---
 
@@ -68,9 +79,19 @@ The `rocky9` Molecule scenario uses Docker as a provisioner. It relies on a cust
 
 From the root of the cloned repository, run:
 
-    ```bash
-    molecule converge --scenario-name rocky9
-    ```
+```bash
+uv run molecule converge --scenario-name rocky9
+```
+
+Or, activate the virtual environment and run commands directly:
+
+```bash
+# Activate the virtual environment
+source .venv/bin/activate
+
+# Run molecule
+molecule converge --scenario-name rocky9
+```
 
 This will build a Docker container, install Dataverse, and configure services.
 
@@ -85,47 +106,100 @@ Once complete, you should be able to access Dataverse at:
 
 To verify the server is responding:
 
-    ```bash
-    curl -I http://localhost:8080
-    ```
+```bash
+curl -I http://localhost:8080
+```
+
+---
+
+## Common Development Commands
+
+### Run Molecule scenarios
+```bash
+# Full test cycle (destroy, create, converge, verify, destroy)
+uv run molecule test --scenario-name rocky9
+
+# Just create and provision (for iterative development)
+uv run molecule converge --scenario-name rocky9
+
+# Login to the running container
+uv run molecule login --scenario-name rocky9
+
+# Destroy the container
+uv run molecule destroy --scenario-name rocky9
+```
+
+### Manage dependencies
+```bash
+# Add a new dependency
+uv add ansible-core@2.17.0
+
+# Update all dependencies
+uv lock --upgrade
+
+# Sync environment after pulling changes
+uv sync
+```
+
+### Run Ansible directly
+```bash
+# Check version
+uv run ansible --version
+
+# Run a playbook
+uv run ansible-playbook dataverse.pb -i inventory
+```
 
 ---
 
 ## Teardown and Rebuild
 
-Because the Dataverse installer is not idempotent, it’s recommended to fully reset the container between changes.
+Because the Dataverse installer is not idempotent, it's recommended to fully reset the container between changes.
 
 To stop and delete the container:
 
-    ```bash
-    molecule reset --scenario-name rocky9
-    ```
+```bash
+uv run molecule destroy --scenario-name rocky9
+```
 
 Then rebuild with:
 
-    ```bash
-    molecule converge --scenario-name rocky9
-    ```
+```bash
+uv run molecule converge --scenario-name rocky9
+```
 
-To open a shell inside the running container:
+---
 
-    ```bash
-    molecule login --scenario-name rocky9
-    ```
+## Troubleshooting
 
-To see additional Molecule commands:
+### Python version mismatch
+uv automatically uses Python 3.11 as specified in `.python-version`. If you have issues:
 
-    ```bash
-    molecule --help
-    ```
+```bash
+# Check which Python uv is using
+uv python list
 
-More documentation: [https://ansible.readthedocs.io/projects/molecule/](https://ansible.readthedocs.io/projects/molecule/)
+# Force uv to use a specific Python version
+uv python install 3.11
+```
+
+### Dependencies out of sync
+```bash
+# Remove virtual environment and reinstall
+rm -rf .venv
+uv sync
+```
+
+### Port 8080 already in use
+Edit `molecule/rocky9/molecule.yml` and change the published port mapping from `"8080:8080"` to another host port like `"8888:8080"`.
 
 ---
 
 ## Notes
 
-- If port `8080` is already in use on your machine, update the port mapping in `molecule/rocky9/molecule.yml`.
 - Ensure Docker Desktop (macOS) or the Docker daemon (Linux/WSL2) is running before launching `molecule converge`.
+- The `.venv` directory is git-ignored and should not be committed.
+- `uv.lock` is the lockfile that pins exact versions - commit this for reproducibility.
+- For more uv documentation: [https://docs.astral.sh/uv/](https://docs.astral.sh/uv/)
 
 ---
