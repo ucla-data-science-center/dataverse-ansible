@@ -35,4 +35,5 @@ pip-log.txt
 
 # VSCode & Editor configs
 .vscode/
-.idea/
+.idea/.ansible/
+.cache/
