@@ -132,15 +132,126 @@ Same as Solr fix - enables prepare.yml caching for Payara (~200MB download)
 
 ---
 
+## JVM Options Idempotency Fix
+
+**Date:** 2025-11-16
+**Files Modified:** `tasks/dataverse-optional-settings.yml`
+**Issue:** JVM option creation tasks were not idempotent
+
+### Problem
+
+Several tasks used `create-jvm-options` without checking if the option already exists:
+
+```yaml
+- name: upload to /tmp until we move away from JSF
+  become: yes
+  become_user: "{{ dataverse.payara.user }}"
+  shell: '{{ payara_dir}}/bin/asadmin create-jvm-options "-Ddataverse.files.uploads={{ dataverse.uploads_dir }}"'
+  when: dataverse.uploads_dir is defined  # ← PROBLEM: No existence check
+```
+
+**This breaks on re-runs:**
+- First converge: Creates JVM option successfully
+- Second converge: Fails with "JVM option already exists in the configuration"
+- Caused idempotency test to fail
+
+### Solution
+
+Added existence checks before each `create-jvm-options` command:
+
+```yaml
+- name: check if uploads directory JVM option exists
+  shell: "{{ payara_dir }}/bin/asadmin list-jvm-options | grep -q 'Ddataverse.files.uploads'"
+  register: has_uploads_dir
+  failed_when: false
+  changed_when: false
+  when: dataverse.uploads_dir is defined
+
+- name: upload to /tmp until we move away from JSF
+  become: yes
+  become_user: "{{ dataverse.payara.user }}"
+  shell: '{{ payara_dir}}/bin/asadmin create-jvm-options "-Ddataverse.files.uploads={{ dataverse.uploads_dir }}"'
+  when: dataverse.uploads_dir is defined and has_uploads_dir.rc != 0
+```
+
+**Fixed options:**
+- `dataverse.files.uploads`
+- `dataverse.oai.server.maxidentifiers`
+- `dataverse.oai.server.maxrecords`
+- `dataverse.feature.index-harvested-metadata-source`
+
+### Benefits
+
+1. **True idempotency** - Can run converge multiple times without errors
+2. **Completes full playbook** - No longer aborts on second run
+3. **Enables full testing** - Payara restart tasks now execute properly
+4. **Follows existing pattern** - Task file already had correct example (system email JVM option)
+
+---
+
+## Ansible Dict Merging Fix (Payara listen_address)
+
+**Date:** 2025-11-16
+**Files Modified:** `molecule/rocky9/group_vars/molecule.yml`, `TROUBLESHOOTING.md`
+**Issue:** Ansible doesn't deep-merge nested dicts
+
+### Problem
+
+Attempted to override only `dataverse.payara.listen_address`:
+
+```yaml
+# WRONG - This replaces the entire payara dict!
+dataverse:
+  payara:
+    listen_address: 0.0.0.0
+```
+
+**What happened:**
+- Ansible replaced the ENTIRE `dataverse.payara` dict
+- Lost all other settings: `user`, `group`, `domain`, `zipurl`, etc.
+- Payara installation broke due to missing variables
+
+### Solution
+
+Must specify the complete `dataverse.payara` section:
+
+```yaml
+# CORRECT - Full dict with all fields from defaults/main.yml
+dataverse:
+  payara:
+    user: dataverse
+    group: dataverse
+    domain: domain1
+    logformat: ulf
+    adminuser: admin
+    adminpass: notPr0d
+    siteurl:
+    listen_address: 0.0.0.0  # Our override
+    launch_timeout: 180
+    request_timeout: 1800
+    root: /usr/local
+    dir: payara6
+    zipurl: https://nexus.payara.fish/repository/payara-community/fish/payara/distributions/payara/6.2025.3/payara-6.2025.3.zip
+    zipchecksum: sha256:88f5c1e5b40ea4bc60ae3e34e6858c1b33145dc06c4b05c3d318ed67c131e210
+```
+
+### Impact
+
+- ✅ Payara listens on `0.0.0.0` (all interfaces)
+- ✅ Docker port mapping works
+- ✅ Dataverse accessible at `localhost:8080` from host
+- 📚 Documented in TROUBLESHOOTING.md for future reference
+
+---
+
 ## Future Improvements to Track
 
-### Payara listen_address for Docker
+### Non-idempotent Dataverse Installer
 
-**File:** `defaults/main.yml`
-**Current:** `dataverse.payara.listen_address: 127.0.0.1`
-**Issue:** Breaks Docker port mapping in local testing
-**Workaround:** Override in `molecule/rocky9/group_vars/molecule.yml` to `0.0.0.0`
-**Potential upstream:** Document this requirement for Docker/Molecule testing
+**File:** `tasks/dataverse-installer.yml` (assumed)
+**Issue:** Installer cannot be run twice on same database
+**Current approach:** Always destroy + converge for testing
+**Potential upstream:** Add check for existing installation, skip if present
 
 ### Non-idempotent Dataverse Installer
 
