@@ -49,6 +49,7 @@ dataverse_use_rds: false
 # Payara
 dataverse_payara_version: 5.2022.5
 dataverse_payara_domain: domain1
+dataverse_payara_listen_address: 0.0.0.0  # Listen on all interfaces for Docker port mapping
 
 # JVM options
 dataverse_jvm_options:
@@ -75,6 +76,25 @@ apache:
   port: 80
 letsencrypt:
   enabled: false
+
+# Role expects: dataverse.payara.listen_address
+# NOTE: Must specify full payara section due to Ansible dict merging behavior
+dataverse:
+  payara:
+    user: dataverse
+    group: dataverse
+    domain: domain1
+    logformat: ulf
+    adminuser: admin
+    adminpass: notPr0d
+    siteurl:
+    listen_address: 0.0.0.0  # OVERRIDE: Must listen on all interfaces for Docker (default: 127.0.0.1)
+    launch_timeout: 180
+    request_timeout: 1800
+    root: /usr/local
+    dir: payara6
+    zipurl: https://nexus.payara.fish/repository/payara-community/fish/payara/distributions/payara/6.2025.3/payara-6.2025.3.zip
+    zipchecksum: sha256:88f5c1e5b40ea4bc60ae3e34e6858c1b33145dc06c4b05c3d318ed67c131e210
 
 # Role expects: db.use_rds and db.postgres.*
 db:

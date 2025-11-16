@@ -53,29 +53,57 @@
 # Our automated harvesting server tests rely on the paging limits to be set to something low
 # (so that the behavior may be triggered and tested without having to create and export 100 datasets)
 
+- name: check if ListIdentifiers JVM option exists
+  shell: "{{ payara_dir }}/bin/asadmin list-jvm-options | grep -q 'Ddataverse.oai.server.maxidentifiers'"
+  register: has_maxidentifiers
+  failed_when: false
+  changed_when: false
+  when: harvest.oaiserver.maxidentifiers is defined
+
 - name: set page size limit for ListIdentifiers
   become: yes
   become_user: "{{ dataverse.payara.user }}"
   shell: '{{ payara_dir}}/bin/asadmin create-jvm-options "-Ddataverse.oai.server.maxidentifiers={{ harvest.oaiserver.maxidentifiers }}"'
-  when: harvest.oaiserver.maxidentifiers is defined
+  when: harvest.oaiserver.maxidentifiers is defined and has_maxidentifiers.rc != 0
+
+- name: check if ListRecords JVM option exists
+  shell: "{{ payara_dir }}/bin/asadmin list-jvm-options | grep -q 'Ddataverse.oai.server.maxrecords'"
+  register: has_maxrecords
+  failed_when: false
+  changed_when: false
+  when: harvest.oaiserver.maxrecords is defined
 
 - name: set page size limit for ListRecords
   become: yes
   become_user: "{{ dataverse.payara.user }}"
   shell: '{{ payara_dir}}/bin/asadmin create-jvm-options "-Ddataverse.oai.server.maxrecords={{ harvest.oaiserver.maxrecords }}"'
-  when: harvest.oaiserver.maxrecords is defined
+  when: harvest.oaiserver.maxrecords is defined and has_maxrecords.rc != 0
+
+- name: check if uploads directory JVM option exists
+  shell: "{{ payara_dir }}/bin/asadmin list-jvm-options | grep -q 'Ddataverse.files.uploads'"
+  register: has_uploads_dir
+  failed_when: false
+  changed_when: false
+  when: dataverse.uploads_dir is defined
 
 - name: upload to /tmp until we move away from JSF
   become: yes
   become_user: "{{ dataverse.payara.user }}"
   shell: '{{ payara_dir}}/bin/asadmin create-jvm-options "-Ddataverse.files.uploads={{ dataverse.uploads_dir }}"'
-  when: dataverse.uploads_dir is defined
+  when: dataverse.uploads_dir is defined and has_uploads_dir.rc != 0
+
+- name: check if harvested metadata indexing JVM option exists
+  shell: "{{ payara_dir }}/bin/asadmin list-jvm-options | grep -q 'Ddataverse.feature.index-harvested-metadata-source'"
+  register: has_harvest_indexing
+  failed_when: false
+  changed_when: false
+  when: dataverse.api.test_suite == true
 
 - name: set dataverse.feature.index-harvested-metadata-source for harvesting tests
   become: yes
   become_user: "{{ dataverse.payara.user }}"
   shell: '{{ payara_dir }}/bin/asadmin create-jvm-options "-Ddataverse.feature.index-harvested-metadata-source=true"'
-  when: dataverse.api.test_suite == true
+  when: dataverse.api.test_suite == true and has_harvest_indexing.rc != 0
 
 - name: set showListFirst value in the deployed idpselect_config.js
   lineinfile:
