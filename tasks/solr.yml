@@ -38,6 +38,11 @@
   debug:
     var: solr_download_url
 
+- name: check if solr is already installed
+  stat:
+    path: "{{ dataverse.solr.root }}/bin/solr.in.sh"
+  register: solr_installed
+
 - name: download and unzip solr
   get_url:
     url: "{{ solr_download_url }}"
@@ -45,17 +50,18 @@
     dest: /tmp/solr-{{ dataverse.solr.version }}.tgz
     timeout: 600
   register: solr_installer_download
+  when: not solr_installed.stat.exists
 
 - name: untar solr
   unarchive:
     src: /tmp/solr-{{ dataverse.solr.version }}.tgz
     remote_src: true
     dest: /tmp
-  when: solr_installer_download.changed
+  when: not solr_installed.stat.exists
 
 - name: remove solr root directory
   file: path="{{ dataverse.solr.root }}" state=absent
-  when: solr_installer_download.changed
+  when: not solr_installed.stat.exists
 
 - name: ensure solr directory exists
   file: path="{{ dataverse.solr.root }}" state=directory
@@ -63,7 +69,7 @@
 
 - name: copy solr distro files into solr root
   shell: "/bin/cp -r /tmp/solr-{{ dataverse.solr.version }}/* {{ dataverse.solr.root }}"
-  when: solr_installer_download.changed
+  when: not solr_installed.stat.exists
 
 - name: mitigate CVE-2021-44228
   ansible.builtin.lineinfile:
