@@ -23,6 +23,11 @@
   when:
     - ansible_os_family == "Debian"
 
+- name: check if payara is already installed
+  stat:
+    path: "{{ payara_dir }}/glassfish/bin/asadmin"
+  register: payara_installed
+
 - name: download payara zip
   get_url:
     url: '{{ dataverse.payara.zipurl }}'
@@ -30,10 +35,11 @@
     checksum: '{{ dataverse.payara.zipchecksum }}'
     dest: /tmp/payara.zip
   register: payara_zip_download
+  when: not payara_installed.stat.exists
 
 - name: unzip to payara root without name/version tld
   shell: 'bsdtar --strip-components=1 -C {{ payara_dir }} -xf /tmp/payara.zip'
-  when: payara_zip_download.changed
+  when: not payara_installed.stat.exists
   notify: enable and restart payara
 
 - name: ensure service account and group exist

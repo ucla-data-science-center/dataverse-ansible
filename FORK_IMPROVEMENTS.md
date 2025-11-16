@@ -84,6 +84,54 @@ Tested with:
 
 ---
 
+## Payara Installation Idempotency Fix
+
+**Date:** 2025-11-16
+**Files Modified:** `tasks/payara.yml`
+**Issue:** Same idempotency bug as Solr
+
+### Problem
+
+Identical pattern to Solr - extraction conditional on download changing:
+
+```yaml
+- name: download payara zip
+  get_url:
+    url: '{{ dataverse.payara.zipurl }}'
+    checksum: '{{ dataverse.payara.zipchecksum }}'
+    dest: /tmp/payara.zip
+  register: payara_zip_download
+
+- name: unzip to payara root without name/version tld
+  shell: 'bsdtar --strip-components=1 -C {{ payara_dir }} -xf /tmp/payara.zip'
+  when: payara_zip_download.changed  # ← PROBLEM
+```
+
+### Solution
+
+Added stat check for Payara installation:
+
+```yaml
+- name: check if payara is already installed
+  stat:
+    path: "{{ payara_dir }}/glassfish/bin/asadmin"
+  register: payara_installed
+
+- name: download payara zip
+  get_url: ...
+  when: not payara_installed.stat.exists
+
+- name: unzip to payara root without name/version tld
+  shell: ...
+  when: not payara_installed.stat.exists
+```
+
+### Benefits
+
+Same as Solr fix - enables prepare.yml caching for Payara (~200MB download)
+
+---
+
 ## Future Improvements to Track
 
 ### Payara listen_address for Docker
@@ -100,6 +148,28 @@ Tested with:
 **Issue:** Installer cannot be run twice on same database
 **Current approach:** Always destroy + converge for testing
 **Potential upstream:** Add check for existing installation, skip if present
+
+### Shibboleth Configuration Idempotency
+
+**File:** `tasks/shibboleth.yml:100`
+**Issue:** Same `when: download.changed` pattern
+**Current code:**
+```yaml
+- name: get shibAuthProvider.json to host
+  get_url:
+    url: http://guides.dataverse.org/...
+    dest: /tmp/shibAuthProvider.json
+  register: shibAuthProvider_json_download
+
+- name: enable shibboleth authentication in dataverse
+  uri:
+    url: http://localhost:8080/api/admin/authenticationProviders
+    method: POST
+    src: /tmp/shibAuthProvider.json
+  when: shibAuthProvider_json_download.changed  # ← PROBLEM
+```
+**Impact:** Low - only affects re-runs with Shibboleth enabled
+**Fix:** Check if authentication provider already registered via API
 
 ### Log4j CVE Mitigation
 
