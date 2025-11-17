@@ -1,205 +1,225 @@
-## Local Setup (Recommended)
+# UCLA Dataverse Ansible - Quick Start Guide
 
-These instructions assume:
+This is UCLA's fork of the [IQSS Dataverse Ansible role](https://github.com/IQSS/dataverse-ansible) with improvements and UCLA-specific configurations.
 
-- You have already cloned this repository locally:
-
-    ```bash
-    git clone https://github.com/ucla-data-science-center/dataverse-ansible.git
-    cd dataverse-ansible
-    ```
-
-- Docker is installed and running on your system.
+**Repository:** https://github.com/ucla-data-science-center/dataverse-ansible
+**Branch:** `develop` (our main branch)
+**Upstream:** https://github.com/IQSS/dataverse-ansible
 
 ---
 
-### 1. Install uv
+## 📚 Documentation Overview
 
-[uv](https://docs.astral.sh/uv/) is a fast Python package and project manager that handles everything: Python installation, virtual environments, and dependency management.
+We maintain several focused guides to help you work with this fork:
 
-**macOS/Linux:**
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| **[TEAM_GUIDE.md](TEAM_GUIDE.md)** | Complete team handbook - start here! | All team members |
+| **[MOLECULE_QUICK_REF.md](MOLECULE_QUICK_REF.md)** | Quick reference for common commands | Developers |
+| **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** | Solutions to common issues | Everyone |
+| **[CONFIG_STRATEGY.md](CONFIG_STRATEGY.md)** | Local vs AWS configuration approach | DevOps/Admins |
+| **[FORK_IMPROVEMENTS.md](FORK_IMPROVEMENTS.md)** | Track our changes vs upstream | Maintainers |
+| **[UPSTREAM_PR_DRAFT.md](UPSTREAM_PR_DRAFT.md)** | Ready-to-submit upstream PRs | Maintainers |
 
-**Windows:**
-```powershell
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-```
-
-**Or install via Homebrew (macOS):**
-```bash
-brew install uv
-```
-
-After installation, restart your terminal or run:
-```bash
-source ~/.bashrc  # or ~/.zshrc
-```
+**👉 New team members: Start with [TEAM_GUIDE.md](TEAM_GUIDE.md)**
 
 ---
 
-### 2. Set Up the Development Environment
+## 🚀 Quick Start (Local Development)
 
-uv will automatically:
-- Install Python 3.11 (if not already available)
-- Create a virtual environment in `.venv`
-- Install all dependencies from `pyproject.toml`
+### Prerequisites
+- **Docker** - Must be running before you start
+- **Git** - To clone this repository
 
-```bash
-uv sync
-```
-
-This installs:
-- `ansible-core` (2.16.6)
-- `molecule` (24.2.1)
-- `molecule-docker` (2.1.0)
-- `docker` Python SDK
-- All transitive dependencies
-
----
-
-### 3. Install Ansible Collections
-
-The project vendors specific versions of Ansible collections locally:
+### 1. Clone and Bootstrap
 
 ```bash
+# Clone the repository
+git clone https://github.com/ucla-data-science-center/dataverse-ansible.git
+cd dataverse-ansible
+
+# Bootstrap the project (installs uv, Python, dependencies, collections)
 make bootstrap
 ```
 
-This installs:
-- `community.general` (11.2.1)
-- `community.postgresql` (4.1.0)
+The `make bootstrap` command:
+- Installs [uv](https://docs.astral.sh/uv/) (fast Python package manager)
+- Sets up Python 3.11 virtual environment
+- Installs Ansible and Molecule dependencies
+- Vendors Ansible collections (community.general 11.2.1, community.postgresql 4.1.0)
+
+### 2. Test Locally with Molecule
+
+```bash
+# Deploy Dataverse in a local Docker container
+uv run molecule converge -s rocky9
+
+# Access Dataverse at http://localhost:8080
+# Default admin: dataverseAdmin / (see group_vars for password)
+```
+
+**That's it!** For detailed usage, see [MOLECULE_QUICK_REF.md](MOLECULE_QUICK_REF.md).
 
 ---
 
-## Running with Molecule and Docker
+## 🎯 Common Tasks
 
-The `rocky9` Molecule scenario uses Docker as a provisioner. It relies on a custom image with `systemd` support, allowing `sudo` commands to run inside the container. This avoids modifying the Ansible role's privilege escalation behavior.
-
-From the root of the cloned repository, run:
-
+### Local Testing
 ```bash
-uv run molecule converge --scenario-name rocky9
+# Fresh deployment
+uv run molecule destroy -s rocky9
+uv run molecule converge -s rocky9
+
+# Run tests
+uv run pytest molecule/rocky9/tests/ -v
+
+# Interactive debugging
+docker exec -it rocky9 /bin/bash
 ```
 
-Or, activate the virtual environment and run commands directly:
+See [MOLECULE_QUICK_REF.md](MOLECULE_QUICK_REF.md) for more commands.
 
+### Deploy to AWS
 ```bash
-# Activate the virtual environment
-source .venv/bin/activate
+# Review configuration differences
+diff molecule/rocky9/group_vars/molecule.yml group_vars/aws.yml
 
-# Run molecule
-molecule converge --scenario-name rocky9
+# Deploy to staging
+ansible-playbook -i inventory/staging site.yml
 ```
 
-This will build a Docker container, install Dataverse, and configure services.
+See [CONFIG_STRATEGY.md](CONFIG_STRATEGY.md) for configuration details.
 
-Once complete, you should be able to access Dataverse at:
+### Troubleshooting
+- **Port 8080 in use?** See [TROUBLESHOOTING.md](TROUBLESHOOTING.md#port-8080-already-in-use)
+- **Dataverse not accessible?** See [TROUBLESHOOTING.md](TROUBLESHOOTING.md#dataverse-not-accessible-from-localhost)
+- **Container won't start?** See [TROUBLESHOOTING.md](TROUBLESHOOTING.md#container-wont-start-cgroup-errors)
 
-    http://localhost:8080
+---
 
-**Default admin login:**
+## 🔧 Our Fork Improvements
 
-- **Username**: `dataverseAdmin`
-- **Password**: defined in `tests/group_vars/vagrant.yml` (see `dataverse_adminpass`)
+We've made several improvements that will be contributed back to upstream:
 
-To verify the server is responding:
+### ✅ Idempotency Fixes (Completed)
+1. **Solr Installation** - Can now run converge multiple times safely
+2. **Payara Installation** - Pre-cached downloads work correctly
+3. **JVM Options** - No errors on re-runs
+4. **prepare.yml Support** - Saves 570MB on repeated runs
+
+### ✅ Testing Infrastructure (Completed)
+- **16 testinfra tests** covering services, ports, health, security
+- All tests passing in CI/molecule workflow
+
+### 📝 Documentation (Completed)
+- Comprehensive troubleshooting guide
+- Configuration strategy docs
+- Ansible dict merging gotchas documented
+
+See [FORK_IMPROVEMENTS.md](FORK_IMPROVEMENTS.md) for complete details.
+
+---
+
+## 🔄 Syncing with Upstream
+
+We regularly sync with upstream to get latest updates:
 
 ```bash
-curl -I http://localhost:8080
+# Add upstream remote (one time)
+git remote add upstream https://github.com/IQSS/dataverse-ansible.git
+
+# Check for upstream updates
+git fetch upstream
+git log develop..upstream/develop
+
+# Merge upstream changes
+git checkout develop
+git merge upstream/develop
+git push origin develop
+```
+
+**Always test after merging upstream changes!**
+
+See [TEAM_GUIDE.md](TEAM_GUIDE.md#syncing-with-upstream) for details.
+
+---
+
+## 📋 Development Workflow
+
+1. **Create feature branch** from `develop`
+2. **Test locally** with molecule
+3. **Run tests**: `uv run pytest molecule/rocky9/tests/ -v`
+4. **Create PR** to `develop`
+5. **Deploy to staging** after merge
+6. **Deploy to production** after staging validation
+
+See [TEAM_GUIDE.md](TEAM_GUIDE.md#development-workflow) for complete workflow.
+
+---
+
+## 🏗️ Repository Structure
+
+```
+dataverse-ansible/
+├── tasks/              # Ansible role tasks (Solr, Payara, etc.)
+├── defaults/           # Default variables
+├── group_vars/         # Environment-specific configs
+│   └── aws.yml        # AWS/production configuration
+├── molecule/           # Testing scenarios
+│   └── rocky9/        # Local Docker testing
+│       ├── group_vars/ # Local test configuration
+│       └── tests/     # Testinfra test suite
+├── collections/        # Vendored Ansible collections
+├── Makefile           # Bootstrap and utility commands
+└── docs/              # Documentation (guides, references)
 ```
 
 ---
 
-## Common Development Commands
+## 📞 Getting Help
 
-### Run Molecule scenarios
-```bash
-# Full test cycle (destroy, create, converge, verify, destroy)
-uv run molecule test --scenario-name rocky9
+### Team Resources
+- **Slack:** #dataverse channel
+- **GitHub Issues:** https://github.com/ucla-data-science-center/dataverse-ansible/issues
+- **Documentation:** Start with [TEAM_GUIDE.md](TEAM_GUIDE.md)
 
-# Just create and provision (for iterative development)
-uv run molecule converge --scenario-name rocky9
-
-# Login to the running container
-uv run molecule login --scenario-name rocky9
-
-# Destroy the container
-uv run molecule destroy --scenario-name rocky9
-```
-
-### Manage dependencies
-```bash
-# Add a new dependency
-uv add ansible-core@2.17.0
-
-# Update all dependencies
-uv lock --upgrade
-
-# Sync environment after pulling changes
-uv sync
-```
-
-### Run Ansible directly
-```bash
-# Check version
-uv run ansible --version
-
-# Run a playbook
-uv run ansible-playbook dataverse.pb -i inventory
-```
+### Upstream Resources
+- **Dataverse Guides:** https://guides.dataverse.org/
+- **Upstream Repo:** https://github.com/IQSS/dataverse-ansible
+- **Community Forum:** https://groups.google.com/g/dataverse-community
 
 ---
 
-## Teardown and Rebuild
+## 🔗 Quick Links
 
-Because the Dataverse installer is not idempotent, it's recommended to fully reset the container between changes.
-
-To stop and delete the container:
-
-```bash
-uv run molecule destroy --scenario-name rocky9
-```
-
-Then rebuild with:
-
-```bash
-uv run molecule converge --scenario-name rocky9
-```
+| Resource | Link |
+|----------|------|
+| Production Instance | https://dataverse.ucla.edu |
+| GitHub Issues | https://github.com/ucla-data-science-center/dataverse-ansible/issues |
+| Upstream Repo | https://github.com/IQSS/dataverse-ansible |
+| Dataverse Docs | https://guides.dataverse.org/ |
+| uv Documentation | https://docs.astral.sh/uv/ |
+| Molecule Docs | https://ansible.readthedocs.io/projects/molecule/ |
 
 ---
 
-## Troubleshooting
+## 📝 Notes
 
-### Python version mismatch
-uv automatically uses Python 3.11 as specified in `.python-version`. If you have issues:
-
-```bash
-# Check which Python uv is using
-uv python list
-
-# Force uv to use a specific Python version
-uv python install 3.11
-```
-
-### Dependencies out of sync
-```bash
-# Remove virtual environment and reinstall
-rm -rf .venv
-uv sync
-```
-
-### Port 8080 already in use
-Edit `molecule/rocky9/molecule.yml` and change the published port mapping from `"8080:8080"` to another host port like `"8888:8080"`.
+- **Main branch:** `develop` (we follow upstream's convention)
+- **Python version:** 3.11 (managed by uv via `.python-version`)
+- **Vendored collections:** We vendor collections locally (don't rely on `ansible-galaxy install`)
+- **Docker required:** Local testing uses Docker via Molecule
+- **Improved idempotency:** We've made the role more idempotent (Solr, Payara, JVM options)
 
 ---
 
-## Notes
+## 🤝 Contributing
 
-- Ensure Docker Desktop (macOS) or the Docker daemon (Linux/WSL2) is running before launching `molecule converge`.
-- The `.venv` directory is git-ignored and should not be committed.
-- `uv.lock` is the lockfile that pins exact versions - commit this for reproducibility.
-- For more uv documentation: [https://docs.astral.sh/uv/](https://docs.astral.sh/uv/)
+See [UCLA-CONTRIBUTING.md](UCLA-CONTRIBUTING.md) for contribution guidelines.
+
+For upstream contributions, see [UPSTREAM_PR_DRAFT.md](UPSTREAM_PR_DRAFT.md).
 
 ---
+
+**Last Updated:** 2025-11-17
+**Maintained by:** UCLA Data Science Center
