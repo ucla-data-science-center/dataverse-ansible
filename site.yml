@@ -1,20 +1,81 @@
-- name: Install Dataverse
-  hosts: all  # or use "dataverse" if it's correctly defined
-  #become: true
-  tasks:
-    - name: Install sudo
-      package:
-        name: sudo
-        state: present
+---
+# site.yml
+# Main playbook for deploying Dataverse
+#
+# Usage:
+#   Local testing:
+#     Use molecule instead: uv run molecule converge -s rocky9
+#
+#   AWS staging deployment:
+#     ansible-playbook -i inventory/staging.yml site.yml
+#
+#   AWS production deployment:
+#     ansible-playbook -i inventory/production.yml site.yml
+#
+# Prerequisites:
+#   1. EC2 instance running Rocky Linux 9 or RHEL 9
+#   2. SSH access configured (see inventory files)
+#   3. Variables configured in group_vars/<environment>.yml
+#   4. Secrets encrypted with ansible-vault
 
-    - name: Install which and pip3
-      package:
-        name: "{{ item }}"
-        state: present
-      loop:
-        - which
-        - python3-pip
+- name: Deploy Dataverse
+  hosts: all
+  become: yes
 
-    - name: Install Dataverse
-      include_role:
-        name: ../  # Your Dataverse role path
+  pre_tasks:
+    - name: Display deployment information
+      debug:
+        msg: |
+          Deploying Dataverse to: {{ inventory_hostname }}
+          Environment: {{ group_names[0] | default('unknown') }}
+          Dataverse hostname: {{ dataverse_hostname | default('not configured') }}
+      tags: always
+
+    - name: Verify required variables are set
+      assert:
+        that:
+          - dataverse_hostname is defined
+          - dataverse_adminpass is defined
+          - dataverse_postgresql_password is defined
+        fail_msg: "Missing required variables. Check group_vars configuration."
+        success_msg: "All required variables are configured."
+      tags: always
+
+  roles:
+    - role: .
+      # This repository itself is the Dataverse ansible role
+      # The role will read variables from:
+      #   1. defaults/main.yml (lowest priority)
+      #   2. group_vars/<environment>.yml (overrides defaults)
+      #   3. inventory host_vars (highest priority)
+
+  post_tasks:
+    - name: Display post-deployment information
+      debug:
+        msg: |
+          =================================================================
+          Dataverse deployment complete!
+
+          Access Dataverse at: {{ dataverse_siteurl }}
+          Admin email: {{ dataverse_adminemail }}
+
+          Next steps:
+          1. Verify services are running:
+             systemctl status payara postgresql-16 solr httpd
+
+          2. Check Dataverse API:
+             curl http://localhost:8080/api/info/version
+
+          3. Access via web browser:
+             {{ dataverse_siteurl }}
+
+          4. Review logs if needed:
+             /usr/local/payara6/glassfish/domains/domain1/logs/server.log
+
+          Security reminders:
+          - Change default passwords in ansible-vault
+          - Enable SSL (see group_vars comments for Let's Encrypt)
+          - Review Apache blocked endpoints configuration
+          - Configure firewall rules for your EC2 security group
+          =================================================================
+      tags: always

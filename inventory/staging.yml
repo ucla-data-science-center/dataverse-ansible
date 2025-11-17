@@ -1,0 +1,34 @@
+# inventory/staging.yml
+# Ansible inventory for UCLA Dataverse staging environment
+#
+# Usage:
+#   ansible-playbook -i inventory/staging.yml site.yml
+#
+# Before using:
+#   1. Replace <STAGING_IP_OR_DNS> with your EC2 instance IP or DNS
+#   2. Replace <PATH_TO_SSH_KEY> with path to your SSH private key
+#   3. Verify ansible_user matches your EC2 AMI (ec2-user, rocky, centos, ubuntu)
+
+---
+all:
+  children:
+    staging:
+      hosts:
+        dataverse-staging:
+          # EC2 instance connection details
+          ansible_host: <STAGING_IP_OR_DNS>              # REPLACE: EC2 public IP or DNS
+          ansible_user: ec2-user                         # VERIFY: May be rocky, centos, or ubuntu depending on AMI
+          ansible_ssh_private_key_file: <PATH_TO_SSH_KEY> # REPLACE: Path to your .pem file
+
+          # Connection settings
+          ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+          ansible_python_interpreter: /usr/bin/python3
+
+          # Optional: Host-specific vars can go here
+          # dataverse_hostname: staging-dataverse.ucla.edu
+
+      vars:
+        # Group-level variables (apply to all staging hosts)
+        # Most configuration should be in group_vars/staging.yml
+        ansible_become: yes
+        ansible_become_method: sudo

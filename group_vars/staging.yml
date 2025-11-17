@@ -1,0 +1,187 @@
+# group_vars/staging.yml
+# UCLA Dataverse staging environment configuration
+#
+# This file contains variables specific to the staging environment.
+# Variables in this file override defaults/main.yml
+#
+# See CONFIG_STRATEGY.md for configuration approach
+
+---
+# =============================================================================
+# DATAVERSE CORE CONFIGURATION
+# =============================================================================
+
+dataverse_hostname: staging-dataverse.ucla.edu  # REPLACE with your staging domain
+dataverse_siteurl: "http://staging-dataverse.ucla.edu"  # Will be https:// after SSL setup
+dataverse_http_port: 8080
+dataverse_adminemail: "dataverse-admin@ucla.edu"  # REPLACE with your admin email
+dataverse_service_email: "noreply-dataverse@ucla.edu"  # REPLACE with your service email
+dataverse_adminpass: "CHANGE_ME_IN_VAULT"  # TODO: Move to ansible-vault
+
+# =============================================================================
+# OPTIONAL FEATURES
+# =============================================================================
+
+dataverse_use_ssl: false  # TODO: Enable after configuring Let's Encrypt (#13)
+dataverse_use_shib: false  # TODO: Enable for SSO (#11)
+dataverse_enable_telemetry: false
+
+# =============================================================================
+# DOI / PERSISTENT IDENTIFIERS
+# =============================================================================
+
+# Use DataCite test environment for staging
+dataverse_doi_provider: datacite  # Options: datacite, ezid, fake, none
+dataverse_doi_authority: "10.80343"  # DataCite test prefix - REPLACE with UCLA's prefix
+dataverse_doi_username: ""  # TODO: Add to ansible-vault
+dataverse_doi_password: ""  # TODO: Add to ansible-vault
+
+# =============================================================================
+# EMAIL / SMTP
+# =============================================================================
+
+dataverse_smtp_host: smtp.ucla.edu  # VERIFY UCLA SMTP server
+dataverse_smtp_port: 587
+# TODO: Add SMTP auth if required
+
+# =============================================================================
+# APACHE CONFIGURATION
+# =============================================================================
+
+dataverse_apache_config_dir: "/etc/httpd/conf.d"
+dataverse_apache_user: apache
+dataverse_apache_group: apache
+
+apache:
+  port: 80  # Will be 443 after SSL setup
+  block:
+    admin: true          # Block /api/admin via proxy
+    destroy: true        # Block destroy endpoint
+    builtin_users: true  # Block builtin-users endpoint
+    sword: true          # Block SWORD API
+  use_ajp: true         # Use AJP connector (recommended)
+
+letsencrypt:
+  enabled: false  # TODO: Enable after #13
+  # email: "letsencrypt@ucla.edu"
+  # staging: true  # Use Let's Encrypt staging for testing
+
+# =============================================================================
+# SOLR CONFIGURATION
+# =============================================================================
+
+dataverse_solr_version: 9.8.0
+dataverse_solr_core_name: collection1
+
+# =============================================================================
+# POSTGRESQL CONFIGURATION
+# =============================================================================
+
+dataverse_postgresql_version: 16
+dataverse_postgresql_user: dvnuser
+dataverse_postgresql_db: dvndb
+dataverse_postgresql_host: localhost
+dataverse_postgresql_port: 5432
+dataverse_postgresql_password: "CHANGE_ME_IN_VAULT"  # TODO: Move to ansible-vault
+dataverse_postgresql_admin_user: postgres
+dataverse_postgresql_admin_password: "CHANGE_ME_IN_VAULT"  # TODO: Move to ansible-vault
+
+# PostgreSQL tuning (adjust based on EC2 instance size)
+dataverse_postgresql_log_lock_waits: true
+dataverse_postgresql_log_statements: all  # Use 'all' for staging debugging
+dataverse_postgresql_query_counts: true
+dataverse_use_rds: false  # Set to true if using AWS RDS
+
+# PostgreSQL backups
+dataverse_postgresql_backups_enabled: true  # Enable for staging
+dataverse_postgresql_backup_rootdir: /opt/pg_backups
+dataverse_postgresql_backup_backupdir: backups
+dataverse_postgresql_backup_host: localhost
+dataverse_postgresql_backup_user: postgres
+dataverse_postgresql_backup_custom: 'yes'
+dataverse_postgresql_backup_globals: 'yes'
+dataverse_postgresql_backup_plain: 'no'
+
+# =============================================================================
+# PAYARA CONFIGURATION
+# =============================================================================
+
+dataverse_payara_version: 5.2022.5
+dataverse_payara_domain: domain1
+dataverse_payara_listen_address: 127.0.0.1  # Localhost only - Apache proxies
+
+# NOTE: Must specify complete payara section due to Ansible dict merging behavior
+# See TROUBLESHOOTING.md for details
+dataverse:
+  payara:
+    user: dataverse
+    group: dataverse
+    domain: domain1
+    logformat: ulf
+    adminuser: admin
+    adminpass: notPr0d  # Payara admin (not Dataverse admin)
+    siteurl:
+    listen_address: 127.0.0.1  # Use 127.0.0.1 for production (behind Apache proxy)
+    launch_timeout: 180
+    request_timeout: 1800
+    root: /usr/local
+    dir: payara6
+    zipurl: https://nexus.payara.fish/repository/payara-community/fish/payara/distributions/payara/6.2025.3/payara-6.2025.3.zip
+    zipchecksum: sha256:88f5c1e5b40ea4bc60ae3e34e6858c1b33145dc06c4b05c3d318ed67c131e210
+
+# JVM options (adjust based on EC2 instance size)
+# Recommendation: Start with 25% of available RAM for Xmx
+dataverse_jvm_options:
+  - "-Xms2g"      # Initial heap size
+  - "-Xmx4g"      # Maximum heap size - ADJUST based on instance RAM
+  - "-XX:+UseG1GC"
+  - "-XX:MaxGCPauseMillis=200"
+
+# =============================================================================
+# R / RSERVE (Optional - for statistical analysis)
+# =============================================================================
+
+rserve_install: false  # Set to true if needed
+
+# =============================================================================
+# ADDITIONAL SETTINGS
+# =============================================================================
+
+# Database settings
+db:
+  use_rds: false
+  postgres:
+    version: 16
+    user: dvnuser
+    password: "{{ dataverse_postgresql_password }}"
+    database: dvndb
+    host: localhost
+    port: 5432
+
+# API settings
+api:
+  allow_lookup: true
+  blocked_endpoints: "builtin-users,test"
+  blocked_policy: ""
+  location: "http://localhost:8080/api"
+  test_suite: false
+
+# Branding (optional)
+# dataverse:
+#   branding:
+#     enabled: true
+#     directory: "{{ playbook_dir }}/files/branding"
+#   copyright: "UC Regents"
+
+# =============================================================================
+# SECURITY NOTES
+# =============================================================================
+
+# TODO: Before deploying to staging:
+# 1. Replace all "CHANGE_ME_IN_VAULT" passwords
+# 2. Use ansible-vault to encrypt sensitive vars:
+#    ansible-vault encrypt_string 'secretpassword' --name 'dataverse_adminpass'
+# 3. Update domain names (staging-dataverse.ucla.edu)
+# 4. Configure UCLA SMTP settings
+# 5. Get DataCite/EZID credentials for DOI minting
+# 6. Review JVM heap sizes based on EC2 instance type

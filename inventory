@@ -1,2 +1,0 @@
-[dataverse]
-rocky9 ansible_connection=docker
