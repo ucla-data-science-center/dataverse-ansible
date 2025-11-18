@@ -74,6 +74,13 @@ rserve_install: false
 # Role expects: apache.port and letsencrypt.enabled
 apache:
   port: 80
+  block:
+    admin: true          # Block /api/admin via proxy
+    destroy: true        # Block destroy endpoint
+    builtin_users: true  # Block builtin-users endpoint
+    sword: true          # Block SWORD API
+  use_ajp: true         # Use AJP connector (recommended)
+
 letsencrypt:
   enabled: false
 
