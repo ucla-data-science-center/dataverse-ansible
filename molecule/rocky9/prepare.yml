@@ -1,0 +1,37 @@
+# molecule/rocky9/prepare.yml
+---
+- name: Pre-seed artifacts for faster, reliable converge
+  hosts: all
+  gather_facts: false
+  vars:
+    solr_version: "{{ dataverse_solr_version | default('9.8.0') }}"
+    controller_cache_dir: "{{ lookup('env','PWD') + '/.cache' }}"
+    controller_solr_path: "{{ controller_cache_dir }}/solr-{{ solr_version }}.tgz"
+    target_solr_path: "/tmp/solr-{{ solr_version }}.tgz"
+    solr_download_url: >-
+      https://archive.apache.org/dist/solr/solr/{{ solr_version }}/solr-{{ solr_version }}.tgz
+  tasks:
+    - name: Ensure controller cache dir exists
+      ansible.builtin.file:
+        path: "{{ controller_cache_dir }}"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+      run_once: true
+
+    - name: Download Solr to controller cache (no checksum here; role will verify)
+      ansible.builtin.get_url:
+        url: "{{ solr_download_url }}"
+        dest: "{{ controller_solr_path }}"
+        mode: "0644"
+        timeout: 1800       # allow slow mirrors
+        force: false        # keep if already there
+      delegate_to: localhost
+      run_once: true
+
+    - name: Copy Solr tarball to target /tmp
+      ansible.builtin.copy:
+        src: "{{ controller_solr_path }}"
+        dest: "{{ target_solr_path }}"
+        mode: "0644"
+      # default controller → target transfer (idempotent by checksum)
