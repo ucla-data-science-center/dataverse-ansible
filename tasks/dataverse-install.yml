@@ -10,6 +10,24 @@
   debug:
     msg: '##### DATAVERSE INSTALLER #####'
 
+# Idempotency check: skip installer if Dataverse is already running
+- name: Check if Dataverse is already installed
+  uri:
+    url: "http://localhost:8080/api/info/version"
+    timeout: 10
+  register: dataverse_preinstall_check
+  failed_when: false
+  changed_when: false
+
+- name: Set dataverse_already_installed fact
+  set_fact:
+    dataverse_already_installed: "{{ dataverse_preinstall_check.status == 200 }}"
+
+- name: Dataverse already installed - skipping installer
+  debug:
+    msg: "Dataverse {{ dataverse_preinstall_check.json.data.version | default('unknown') }} already installed. Skipping installer tasks."
+  when: dataverse_already_installed
+
 # this is necessary for the installer. dataverse-storage.yml does the real work later.
 - name: filesdir must pre-exist
   ansible.builtin.file:
@@ -140,7 +158,9 @@
   become_user: '{{ dataverse.payara.user }}'
   args:
     chdir: /tmp/dvinstall
-  when: not dataverse.deployment.upgrade_only
+  when:
+    - not dataverse.deployment.upgrade_only
+    - not dataverse_already_installed
 
 - name: upgrade only -- deploy dataverse war
   shell: '{{ payara_dir }}/bin/asadmin redeploy --name dataverse /tmp/dvinstall/dataverse.war'
@@ -153,12 +173,15 @@
   become_user: "{{ dataverse.payara.user }}"
   shell: '{{ payara_dir }}/bin/asadmin stop-domain {{ dataverse.payara.domain }}'
   ignore_errors: yes
-  when: not dataverse.deployment.upgrade_only
+  when:
+    - not dataverse.deployment.upgrade_only
+    - not dataverse_already_installed
 
 - name: now start payara with systemd
   service:
     name: payara
     state: started
+  when: not dataverse_already_installed
 
 - ansible.builtin.import_tasks: check_index_status.yml
 

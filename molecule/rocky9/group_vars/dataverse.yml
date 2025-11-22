@@ -175,7 +175,7 @@ dataverse:
         iconUrl: https://licensebuttons.net/l/by-sa/4.0/88x31.png
         active: true
         sortOrder: 7
-  thumbnails: false
+  thumbnails: true
   srcdir: /opt/dataverse/dataverse
   uploads_dir: /tmp
   usermgmtkey: burrito
@@ -202,7 +202,7 @@ dataverse:
     home: /tmp/jacoco
     version: 0.8.12
   sampledata:
-    enabled: false
+    enabled: false  # Disabled - IQSS sample data scripts are fragile and fail on API timeouts
     dir: /tmp/sampledata
     repo: https://github.com/IQSS/dataverse-sample-data.git
     branch: master
@@ -215,7 +215,19 @@ dataverse:
       - https://github.com/IQSS/dataverse/files/3744336/codemeta.tsv.txt
   copyright: "UC Regents"
   counter:
-    enabled: false
+    enabled: true
+    hub_api_token: set_me_in_secrets
+    hub_base_url: "https://api.datacite.org"
+    machines_url: "https://raw.githubusercontent.com/CDLUC3/Make-Data-Count/master/user-agents/lists/machine.txt"
+    maxmind_geoip_country_path: "maxmind_geoip/GeoLite2-Country.mmdb"
+    output_file: "/dataverse/sushi_sample_logs"
+    output_format: json
+    platform: dash
+    robots_url: "https://raw.githubusercontent.com/CDLUC3/Make-Data-Count/master/user-agents/lists/robot.txt"
+    version: "0.1.04"
+    upload_to_hub: false
+    user: counter
+    year_month: "2018-05"
   unittests:
     enabled: false
     argument: '-DcompilerArgument=-Xlint:unchecked test -P all-unit-tests'
