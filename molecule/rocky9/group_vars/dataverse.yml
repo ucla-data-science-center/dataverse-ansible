@@ -98,21 +98,88 @@ letsencrypt:
 
 # Role expects: dataverse.payara.*, dataverse.thumbnails, dataverse.frontend.*, etc.
 # NOTE: Must specify full sections due to Ansible dict merging behavior
+dataverse_misc_files_dir: '/opt/dv'
+
 dataverse:
   version: '6.8'
   adminpass: admin1
   allow_signups: true
   branding:
-    enabled: false
+    enabled: true
+    directory: "{{ playbook_dir }}/files/branding"
+    favicons_directory: "{{ playbook_dir }}/files/favicons"
+    fileSettings:
+      - setting: HeaderCustomizationFile
+        file: custom-header.html
+      - setting: StyleCustomizationFile
+        file: custom-stylesheet.css
+      - setting: LogoCustomizationFile
+        file: dataverseUCLA_logo.png
+    otherSettings:
+      - setting: FooterCopyright
+        value: " UC Regents"
   language:
-    enabled: false
+    enabled: true
+    languages:
+      - locale: en_US
+        title: English
+      - locale: es_ES
+        title: Spanish
+    language_packs:
+      source: https://github.com/GlobalDataverseCommunityConsortium/dataverse-language-packs.git
+      version: develop
+    lang_directory: "{{ dataverse_misc_files_dir }}/lang"
   licenses:
-    enabled: false
+    enabled: true
+    user: dataverseAdmin
+    licenses:
+      - name: CC0 1.0
+        uri: http://creativecommons.org/publicdomain/zero/1.0
+        shortDescription: Creative Commons CC0 1.0 Universal Public Domain Dedication.
+        iconUrl: https://licensebuttons.net/p/zero/1.0/88x31.png
+        active: true
+        sortOrder: 1
+      - name: CC BY 4.0
+        uri: http://creativecommons.org/licenses/by/4.0
+        shortDescription: Creative Commons Attribution 4.0 International License.
+        iconUrl: https://licensebuttons.net/l/by/4.0/88x31.png
+        active: true
+        sortOrder: 2
+      - name: CC BY-NC 4.0
+        uri: http://creativecommons.org/licenses/by-nc/4.0
+        shortDescription: Creative Commons Attribution-NonCommercial 4.0 International License.
+        iconUrl: https://licensebuttons.net/l/by-nc/4.0/88x31.png
+        active: true
+        sortOrder: 3
+      - name: CC BY-NC-ND 4.0
+        uri: http://creativecommons.org/licenses/by-nc-nd/4.0
+        shortDescription: Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License.
+        iconUrl: https://licensebuttons.net/l/by-nc-nd/4.0/88x31.png
+        active: true
+        sortOrder: 4
+      - name: CC BY-NC-SA 4.0
+        uri: http://creativecommons.org/licenses/by-nc-sa/4.0
+        shortDescription: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+        iconUrl: https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png
+        active: true
+        sortOrder: 5
+      - name: CC BY-ND 4.0
+        uri: http://creativecommons.org/licenses/by-nd/4.0
+        shortDescription: Creative Commons Attribution-NoDerivatives 4.0 International License.
+        iconUrl: https://licensebuttons.net/l/by-nd/4.0/88x31.png
+        active: true
+        sortOrder: 6
+      - name: CC BY-SA 4.0
+        uri: http://creativecommons.org/licenses/by-sa/4.0
+        shortDescription: Creative Commons Attribution-ShareAlike 4.0 International License.
+        iconUrl: https://licensebuttons.net/l/by-sa/4.0/88x31.png
+        active: true
+        sortOrder: 7
   thumbnails: false
   srcdir: /opt/dataverse/dataverse
   uploads_dir: /tmp
   usermgmtkey: burrito
-  service_email: noreply@example.edu
+  service_email: noreply@dataverse.ucla.edu
   smtp: localhost
   memheap: 2048
   file_fixity_checksum_algorithm: "MD5"
@@ -120,8 +187,8 @@ dataverse:
   frontend:
     enabled: false
   previewers:
-    enabled: false
-    on_same_server: false
+    enabled: true
+    on_same_server: true
     zip_url: https://github.com/gdcc/dataverse-previewers/releases/download/1.2/dataverse-previewers-1.2.zip
     dir: /var/www/html
   api:
@@ -143,8 +210,10 @@ dataverse:
   custom_sampledata:
     enabled: false
   custom_metadata_blocks:
-    enabled: false
-  copyright: "Test Organization"
+    enabled: true
+    urls:
+      - https://github.com/IQSS/dataverse/files/3744336/codemeta.tsv.txt
+  copyright: "UC Regents"
   counter:
     enabled: false
   unittests:
@@ -178,8 +247,9 @@ dataverse:
   externaltools:
     datacurationtool:
       enabled: false
+      method: demo
     dataexplorer:
-      enabled: false
+      enabled: true
     wholetale:
       enabled: false
   handlenet:

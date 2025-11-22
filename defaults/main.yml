@@ -79,7 +79,7 @@ dataverse:
     languages:
      - locale: en_US
        title: English
-     - locale: de_ES
+     - locale: es_ES
        title: Spanish
     language_packs:
       source: https://github.com/GlobalDataverseCommunityConsortium/dataverse-language-packs.git

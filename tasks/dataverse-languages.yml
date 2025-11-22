@@ -73,19 +73,13 @@
     path: "{{ lang_git_dir }}/tmp"
     state: directory
 
-# New Check for Each Locale Directory Using a Fact
-- name: Check if language directory exists for each locale
-  set_fact:
-    locale_dir_exists: "{{ lookup('file', lang_git_dir + '/' + item.locale, errors='ignore') is not none }}"
+# Copy language files - ignore errors if locale doesn't exist
+- name: Copy language files to temporary directory
+  shell: "cp -R {{ lang_git_dir }}/{{ item.locale }}*/*.properties {{ lang_git_dir }}/tmp/ 2>/dev/null || true"
+  changed_when: false
   with_items: "{{ dataverse.language.languages }}"
   loop_control:
     label: "{{ item.locale }}"
-
-- name: Copy language files to temporary directory
-  shell: "cp -R {{ lang_git_dir }}/{{ item.locale }}*/*.properties {{ lang_git_dir }}/tmp/"
-  changed_when: false
-  with_items: "{{ dataverse.language.languages }}"
-  when: locale_dir_exists
 
 - name: Check if there was a change in the temporary directory
   shell: "cd {{ lang_git_dir }} && diff -r tmp tmp.bak || true"
