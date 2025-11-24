@@ -89,6 +89,15 @@
     dest: /tmp/shibAuthProvider.json
   register: shibAuthProvider_json_download
 
+- name: check if shibboleth authentication provider already exists
+  uri:
+    url: http://localhost:8080/api/admin/authenticationProviders
+    method: GET
+    return_content: yes
+  register: existing_auth_providers
+  failed_when: false
+  changed_when: false
+
 - name: enable shibboleth authentication in dataverse
   uri:
     url: http://localhost:8080/api/admin/authenticationProviders
@@ -97,7 +106,7 @@
     body_format: json
     remote_src: yes
     status_code: 201
-  when: shibAuthProvider_json_download.changed
+  when: existing_auth_providers.status == 200 and (existing_auth_providers.json.data | selectattr('id', 'equalto', 'shib') | list | length == 0)
 
 - name: enable apache shib module on Debian
   apache2_module:

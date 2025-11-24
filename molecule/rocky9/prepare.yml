@@ -11,6 +11,9 @@
     solr_download_url: >-
       https://archive.apache.org/dist/solr/solr/{{ solr_version }}/solr-{{ solr_version }}.tgz
   tasks:
+    - name: Install sudo and which (required for Docker containers)
+      ansible.builtin.raw: dnf install -y sudo which
+      changed_when: false
     - name: Ensure controller cache dir exists
       ansible.builtin.file:
         path: "{{ controller_cache_dir }}"

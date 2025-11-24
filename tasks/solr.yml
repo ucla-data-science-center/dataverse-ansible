@@ -77,12 +77,19 @@
     line: 'SOLR_OPTS="$SOLR_OPTS -Dlog4j2.formatMsgNoLookups=true"'
     state: present
 
+- name: check if JndiLookup.class exists in log4j-core.jar
+  ansible.builtin.shell:
+    cmd: 'unzip -l {{ dataverse.solr.root }}/server/lib/ext/log4j-core-*.jar | grep -q JndiLookup.class'
+  register: jndilookup_check
+  failed_when: false
+  changed_when: false
+
 - name: remove JndiLookup.class from log4j-core.jar
   ansible.builtin.shell:
     cmd: 'zip -q -d {{ dataverse.solr.root }}/server/lib/ext/log4j-core-*.jar org/apache/logging/log4j/core/lookup/JndiLookup.class'
   become: yes
   become_user: root
-  ignore_errors: yes
+  when: jndilookup_check.rc == 0
 
 - name: solr doesn't create its log directory until runtime
   file: path="{{ dataverse.solr.root }}/server/logs" state=directory

@@ -51,6 +51,13 @@ dataverse:
 **Why full section needed:**
 Ansible doesn't deep-merge nested dicts by default. If you only specify `dataverse.payara.listen_address`, it replaces the entire `payara` dict, losing all other settings.
 
+**Common dicts that need full specification in molecule group_vars:**
+- `apache` - Must include `ssl`, `block`, `port`, `enabled`, etc.
+- `dataverse` - Must include `payara`, `thumbnails`, and other sub-keys
+- `db` - Must include `postgres`, `use_rds`, etc.
+
+**Quick fix:** Copy the full dict structure from `defaults/main.yml` and only modify the values you need to override.
+
 Then rebuild:
 ```bash
 uv run molecule destroy -s rocky9

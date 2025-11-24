@@ -41,8 +41,12 @@
         success_msg: "All required variables are configured."
       tags: always
 
-  roles:
-    - role: .
+  tasks:
+    - name: Include dataverse role tasks
+      ansible.builtin.include_role:
+        name: "{{ playbook_dir }}"
+        apply:
+          tags: all
       # This repository itself is the Dataverse ansible role
       # The role will read variables from:
       #   1. defaults/main.yml (lowest priority)
