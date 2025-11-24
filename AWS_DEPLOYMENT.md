@@ -549,16 +549,78 @@ sudo dnf update -y
 
 ---
 
+## UCLA-Specific Configuration
+
+The following UCLA customizations are already configured in `defaults/main.yml` and will be deployed automatically:
+
+### ✅ Branding (Pre-configured)
+- UCLA Library themed header, footer, homepage
+- UCLA Dataverse logo (UCLA letterforms + "Dataverse")
+- UCLA-themed favicons
+- CSS icon color overrides (UCLA blue #2774AE)
+- Support portal link to UCLA Jira
+
+### ✅ Metadata Blocks (Pre-configured)
+- CodeMeta (software/code)
+- HELADA (UCLA heritage language custom)
+- Geospatial
+- Social Science & Humanities
+- Astrophysics
+- Biomedical/Life Sciences
+- Journals
+
+### ✅ Language Support (Pre-configured)
+- English, Spanish, Chinese, Japanese, Korean
+
+### ⚙️ AWS-Specific Settings Required
+
+Update these in `group_vars/production.yml` for production deployment:
+
+```yaml
+# Required: Set public URL
+dataverse:
+  payara:
+    siteurl: "https://dataverse.library.ucla.edu"  # CRITICAL for OAuth/OIDC
+
+# Required: Production DOI credentials
+doi:
+  provider: datacite  # or ezid
+  authority: "10.XXXXX"  # UCLA's production DOI prefix
+  username: "UCLA_DATACITE_USERNAME"
+  password: "USE_ANSIBLE_VAULT"  # Encrypt this!
+  baseurl: "https://mds.datacite.org/"  # Production URL
+
+# Required: Production email
+service_email: "noreply@dataverse.library.ucla.edu"
+smtp: "smtp.ucla.edu"  # UCLA's SMTP relay
+
+# Recommended: Disable public signups for production
+allow_signups: false  # Require approval or Shibboleth
+```
+
+### 🔒 Make Data Count (Optional)
+
+If enabling usage metrics via DataCite:
+
+```yaml
+counter:
+  enabled: true
+  hub_api_token: "USE_ANSIBLE_VAULT"  # Get from DataCite
+  hub_base_url: "https://api.datacite.org"
+```
+
 ## Next Steps
 
 After successful deployment:
 
 1. **Configure SSL** - See issue #13 for Let's Encrypt setup
-2. **Enable SSO** - See issue #11 for Shibboleth integration
-3. **Set up monitoring** - CloudWatch, Datadog, or Prometheus
-4. **Configure backups** - Database and file storage
-5. **Load test** - Verify performance under load
-6. **Document runbook** - Instance-specific procedures
+2. **Set DOI credentials** - Update production DOI authority and credentials
+3. **Configure SMTP** - Set up UCLA email relay
+4. **Enable SSO** - See issue #11 for Shibboleth integration
+5. **Set up monitoring** - CloudWatch, Datadog, or Prometheus
+6. **Configure backups** - Database and file storage
+7. **Load test** - Verify performance under load
+8. **Document runbook** - Instance-specific procedures
 
 ---
 
