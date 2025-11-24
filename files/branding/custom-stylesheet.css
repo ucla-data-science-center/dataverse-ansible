@@ -1,0 +1,389 @@
+/*
+ * UCLA Dataverse Custom Stylesheet
+ * Matches UCLA Library (library.ucla.edu) design system
+ *
+ * UCLA Brand Colors:
+ * - UCLA Blue: #2774AE
+ * - UCLA Gold: #FFD100
+ * - UCLA Dark Blue: #003B5C
+ * - UCLA Darker Blue: #00263E
+ */
+
+/* ==========================================================================
+   Base Typography
+   ========================================================================== */
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ==========================================================================
+   Primary Buttons & Links
+   ========================================================================== */
+
+.btn-primary,
+.btn-ucla {
+    background-color: #2774AE !important;
+    border-color: #2774AE !important;
+    color: #FFFFFF !important;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-ucla:hover,
+.btn-ucla:focus {
+    background-color: #003B5C !important;
+    border-color: #003B5C !important;
+    color: #FFFFFF !important;
+}
+
+a {
+    color: #2774AE;
+    transition: color 0.2s ease;
+}
+
+a:hover,
+a:focus {
+    color: #003B5C;
+}
+
+/* ==========================================================================
+   Navbar Styling
+   ========================================================================== */
+
+.navbar-default {
+    background-color: #FFFFFF;
+    border-bottom: 1px solid #E5E5E5;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.navbar-default .navbar-nav > li > a {
+    color: #333333;
+    font-weight: 500;
+}
+
+.navbar-default .navbar-nav > li > a:hover,
+.navbar-default .navbar-nav > li > a:focus {
+    color: #2774AE;
+}
+
+.navbar-default .navbar-nav > .open > a,
+.navbar-default .navbar-nav > .open > a:hover,
+.navbar-default .navbar-nav > .open > a:focus {
+    background-color: #F5F5F5;
+    color: #2774AE;
+}
+
+/* ==========================================================================
+   Homepage Customization
+   ========================================================================== */
+
+#ucla-homepage {
+    padding: 40px 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+#ucla-homepage h2 {
+    color: #003B5C;
+    font-size: 32px;
+    font-weight: 600;
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+#ucla-homepage h3 {
+    color: #003B5C;
+    font-size: 22px;
+    font-weight: 600;
+    margin-top: 32px;
+    margin-bottom: 16px;
+}
+
+#ucla-homepage h4 {
+    color: #333333;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+#ucla-homepage .lead {
+    font-size: 18px;
+    color: #555555;
+    line-height: 1.6;
+}
+
+/* Welcome wells */
+.leadContent .customWell {
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5E5;
+    border-radius: 8px;
+    padding: 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.leadContent .customWell h3 {
+    margin-top: 0;
+    color: #003B5C;
+}
+
+.leadContent ol {
+    padding-left: 20px;
+    margin: 16px 0;
+}
+
+.leadContent ol li {
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+/* Search section */
+.uclaSearch .searchContainer {
+    margin: 40px 0;
+    padding: 32px;
+    background: linear-gradient(135deg, #2774AE 0%, #003B5C 100%);
+    border-radius: 8px;
+}
+
+.uclaSearch h3 {
+    margin-top: 0;
+    color: #FFFFFF;
+}
+
+.uclaSearch .form-control {
+    height: 48px;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px 0 0 4px;
+}
+
+.uclaSearch .btn {
+    height: 48px;
+    padding: 0 24px;
+    font-size: 16px;
+    border-radius: 0 4px 4px 0;
+    background-color: #FFD100;
+    border-color: #FFD100;
+    color: #003B5C;
+    font-weight: 600;
+}
+
+.uclaSearch .btn:hover {
+    background-color: #E5BC00;
+    border-color: #E5BC00;
+}
+
+/* Browse section */
+.browseSection {
+    margin: 40px 0;
+    padding: 24px 0;
+}
+
+/* Featured collections panels */
+.featuredDataverses {
+    margin: 40px 0;
+}
+
+.featuredDataverses .panel {
+    border: 1px solid #E5E5E5;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.featuredDataverses .panel:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.featuredDataverses .panel-heading {
+    background-color: #003B5C;
+    border: none;
+    padding: 16px 20px;
+}
+
+.featuredDataverses .panel-title {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.featuredDataverses .panel-title a {
+    color: #FFFFFF;
+    text-decoration: none;
+}
+
+.featuredDataverses .panel-title a:hover {
+    color: #FFD100;
+}
+
+.featuredDataverses .panel-body {
+    padding: 20px;
+    min-height: 100px;
+    color: #555555;
+    line-height: 1.5;
+}
+
+/* Deposit banner */
+.depositBanner {
+    margin: 40px 0;
+}
+
+.depositBanner .alert-info {
+    background-color: #E8F4F8;
+    border: 1px solid #2774AE;
+    border-left: 4px solid #2774AE;
+    border-radius: 4px;
+    color: #333333;
+    padding: 20px 24px;
+}
+
+.depositBanner .alert-info h4 {
+    color: #003B5C;
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+.depositBanner .alert-link {
+    color: #2774AE;
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   Search Results
+   ========================================================================== */
+
+table[id$='resultsTable'] td > div.dataverseResult {
+    border: 1px solid #E5E5E5;
+    border-left: 4px solid #2774AE;
+    border-radius: 4px;
+    margin-bottom: 12px;
+    transition: box-shadow 0.2s ease;
+}
+
+table[id$='resultsTable'] td > div.dataverseResult:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+table[id$='resultsTable'] td > div.datasetResult {
+    border: 1px solid #E5E5E5;
+    border-left: 4px solid #003B5C;
+    border-radius: 4px;
+    margin-bottom: 12px;
+    transition: box-shadow 0.2s ease;
+}
+
+table[id$='resultsTable'] td > div.datasetResult:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+table[id$='resultsTable'] td > div.fileResult {
+    border: 1px solid #E5E5E5;
+    border-left: 4px solid #8BB8E8;
+    border-radius: 4px;
+    margin-bottom: 12px;
+}
+
+/* ==========================================================================
+   Dataverse/Dataset Pages
+   ========================================================================== */
+
+.dataverseHeaderBlock {
+    border-bottom: 2px solid #2774AE;
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+}
+
+.btn-download {
+    background-color: #2774AE;
+    border-color: #2774AE;
+}
+
+.btn-download:hover {
+    background-color: #003B5C;
+    border-color: #003B5C;
+}
+
+/* ==========================================================================
+   Forms
+   ========================================================================== */
+
+.form-control:focus {
+    border-color: #2774AE;
+    box-shadow: 0 0 0 3px rgba(39, 116, 174, 0.15);
+}
+
+/* ==========================================================================
+   Custom Icon Colors - UCLA Theme
+   ========================================================================== */
+
+/* Override Dataverse collection icon color from orange to UCLA blue */
+.icon-dataverse,
+.text-dataverse {
+    color: #2774AE !important;
+}
+
+.bg-dataverse {
+    background-color: #2774AE !important;
+}
+
+/* Keep dataset icon as UCLA dark blue */
+.icon-dataset,
+.text-dataset {
+    color: #003B5C !important;
+}
+
+.bg-dataset {
+    background-color: #003B5C !important;
+}
+
+/* File icon stays grey but adjust to match our palette */
+.icon-file,
+.text-file {
+    color: #757575 !important;
+}
+
+.bg-file {
+    background-color: #F5F5F5 !important;
+}
+
+/* ==========================================================================
+   Hide default Dataverse footer (using custom)
+   ========================================================================== */
+
+footer#dvfooter {
+    display: none !important;
+}
+
+/* ==========================================================================
+   Utility Classes
+   ========================================================================== */
+
+.ucla-blue { color: #2774AE; }
+.ucla-gold { color: #FFD100; }
+.ucla-dark-blue { color: #003B5C; }
+.bg-ucla-blue { background-color: #2774AE; color: #FFFFFF; }
+.bg-ucla-gold { background-color: #FFD100; color: #003B5C; }
+.bg-ucla-dark { background-color: #003B5C; color: #FFFFFF; }
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    #ucla-homepage h2 {
+        font-size: 26px;
+    }
+
+    #ucla-homepage h3 {
+        font-size: 20px;
+    }
+
+    .featuredDataverses .panel-body {
+        min-height: auto;
+    }
+
+    .uclaSearch .searchContainer {
+        padding: 24px;
+    }
+}

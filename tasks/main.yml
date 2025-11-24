@@ -136,10 +136,15 @@
   tags:
   - orcid
 
-- ansible.builtin.import_tasks: sampledata.yml
-  when: dataverse.sampledata.enabled == true
+- ansible.builtin.import_tasks: sampledata-api.yml
+  when: dataverse.sampledata.enabled == true and (dataverse.sampledata.use_api | default(true))
   tags:
   - sampledata
+
+- ansible.builtin.import_tasks: sampledata.yml
+  when: dataverse.sampledata.enabled == true and not (dataverse.sampledata.use_api | default(true))
+  tags:
+  - sampledata-legacy
 
 - ansible.builtin.import_tasks: custom_sampledata.yml
   when: dataverse.custom_sampledata.enabled == true

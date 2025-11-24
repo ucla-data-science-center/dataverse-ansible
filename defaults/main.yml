@@ -64,6 +64,7 @@ dataverse:
     enabled: true
     directory: "{{ playbook_dir }}/files/branding"
     favicons_directory: "{{ playbook_dir }}/files/favicons"
+    support_url: "https://uclalibrary.atlassian.net/servicedesk/customer/portal/5/group/13/create/46"
     fileSettings:
      - setting: HeaderCustomizationFile
        file: custom-header.html
@@ -71,9 +72,15 @@ dataverse:
        file: custom-stylesheet.css
      - setting: LogoCustomizationFile
        file: dataverseUCLA_logo.png
+     - setting: HomePageCustomizationFile
+       file: custom-homepage.html
+     - setting: FooterCustomizationFile
+       file: custom-footer.html
     otherSettings:
      - setting: FooterCopyright
        value: " UC Regents"
+     - setting: InstallationName
+       value: "UCLA Dataverse"
   language:
     enabled: true # setting this to true allows the language task to run
     languages:
@@ -81,6 +88,12 @@ dataverse:
        title: English
      - locale: es_ES
        title: Spanish
+     - locale: zh_CN
+       title: Chinese (Simplified)
+     - locale: ja_JP
+       title: Japanese
+     - locale: ko_KR
+       title: Korean
     language_packs:
       source: https://github.com/GlobalDataverseCommunityConsortium/dataverse-language-packs.git
       version: develop
@@ -152,6 +165,12 @@ dataverse:
     enabled: true
     urls:
       - https://github.com/IQSS/dataverse/files/3744336/codemeta.tsv.txt
+      - https://raw.githubusercontent.com/ucla-data-science-center/dataverse-custom-metadata/main/helada3.tsv
+      - https://raw.githubusercontent.com/IQSS/dataverse/develop/scripts/api/data/metadatablocks/geospatial.tsv
+      - https://raw.githubusercontent.com/IQSS/dataverse/develop/scripts/api/data/metadatablocks/social_science.tsv
+      - https://raw.githubusercontent.com/IQSS/dataverse/develop/scripts/api/data/metadatablocks/astrophysics.tsv
+      - https://raw.githubusercontent.com/IQSS/dataverse/develop/scripts/api/data/metadatablocks/biomedical.tsv
+      - https://raw.githubusercontent.com/IQSS/dataverse/develop/scripts/api/data/metadatablocks/journals.tsv
   default:
     config:
     storage_id: file
@@ -237,6 +256,15 @@ dataverse:
     dir: /var/www/html
   sampledata:
     enabled: false
+    # Use API-based sample data (more reliable than Python script)
+    use_api: true
+    # Settings for API-based sample data
+    collection_name: "UCLA Data Science Center"
+    collection_alias: "ucla-dsc"
+    collection_description: "Research data from the UCLA Library Data Science Center."
+    contact_email: "datascience@library.ucla.edu"
+    affiliation: "UCLA Library"
+    # Legacy Python script settings (use_api: false)
     dir: /tmp/sampledata
     repo: https://github.com/IQSS/dataverse-sample-data.git
     branch: master

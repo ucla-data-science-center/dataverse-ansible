@@ -1,0 +1,302 @@
+---
+# dataverse/tasks/sampledata-api.yml
+# Create sample data using Dataverse API (more reliable than Python script)
+
+- name: run sampledata via API
+  debug:
+    msg: '##### SAMPLEDATA VIA API #####'
+
+# grab siteUrl so sampledata can run standalone
+- ansible.builtin.import_tasks: dataverse-fqdn.yml
+
+# grab apitoken so sampledata can run standalone
+- ansible.builtin.import_tasks: dataverse-apitoken.yml
+
+- name: strip backslash from siteUrl
+  set_fact:
+    siteUrl_stripped: '{{ siteUrl | regex_replace("\\\\", "") }}'
+
+- name: publish root dataverse
+  uri:
+    url: "{{ siteUrl_stripped }}/api/dataverses/root/actions/:publish"
+    method: POST
+    headers:
+      X-Dataverse-key: "{{ api_token }}"
+    status_code: [200, 201]
+  register: root_publish
+  failed_when: false
+
+- name: create sample dataverse collection
+  uri:
+    url: "{{ siteUrl_stripped }}/api/dataverses/root"
+    method: POST
+    headers:
+      X-Dataverse-key: "{{ api_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      name: "{{ dataverse.sampledata.collection_name | default('UCLA Data Science Center') }}"
+      alias: "{{ dataverse.sampledata.collection_alias | default('ucla-dsc') }}"
+      dataverseContacts:
+        - contactEmail: "{{ dataverse.sampledata.contact_email | default('datascience@library.ucla.edu') }}"
+      affiliation: "{{ dataverse.sampledata.affiliation | default('UCLA Library') }}"
+      description: "{{ dataverse.sampledata.collection_description | default('Research data from the UCLA Library Data Science Center.') }}"
+      dataverseType: "RESEARCH_GROUP"
+    status_code: [200, 201]
+  register: collection_created
+  failed_when: false
+
+- name: publish sample dataverse collection
+  uri:
+    url: "{{ siteUrl_stripped }}/api/dataverses/{{ dataverse.sampledata.collection_alias | default('ucla-dsc') }}/actions/:publish"
+    method: POST
+    headers:
+      X-Dataverse-key: "{{ api_token }}"
+    status_code: [200, 201]
+  when: collection_created.status in [200, 201]
+
+- name: create first sample dataset (climate data)
+  uri:
+    url: "{{ siteUrl_stripped }}/api/dataverses/{{ dataverse.sampledata.collection_alias | default('ucla-dsc') }}/datasets"
+    method: POST
+    headers:
+      X-Dataverse-key: "{{ api_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      datasetVersion:
+        license:
+          name: "CC0 1.0"
+          uri: "http://creativecommons.org/publicdomain/zero/1.0"
+        metadataBlocks:
+          citation:
+            fields:
+              - typeName: "title"
+                multiple: false
+                typeClass: "primitive"
+                value: "Sample Research Dataset: Los Angeles Urban Climate Analysis"
+              - typeName: "author"
+                multiple: true
+                typeClass: "compound"
+                value:
+                  - authorName:
+                      typeName: "authorName"
+                      multiple: false
+                      typeClass: "primitive"
+                      value: "Smith, Jane"
+                    authorAffiliation:
+                      typeName: "authorAffiliation"
+                      multiple: false
+                      typeClass: "primitive"
+                      value: "UCLA Geography"
+              - typeName: "datasetContact"
+                multiple: true
+                typeClass: "compound"
+                value:
+                  - datasetContactEmail:
+                      typeName: "datasetContactEmail"
+                      multiple: false
+                      typeClass: "primitive"
+                      value: "{{ dataverse.sampledata.contact_email | default('datascience@library.ucla.edu') }}"
+                    datasetContactName:
+                      typeName: "datasetContactName"
+                      multiple: false
+                      typeClass: "primitive"
+                      value: "{{ dataverse.sampledata.collection_name | default('UCLA Data Science Center') }}"
+              - typeName: "dsDescription"
+                multiple: true
+                typeClass: "compound"
+                value:
+                  - dsDescriptionValue:
+                      typeName: "dsDescriptionValue"
+                      multiple: false
+                      typeClass: "primitive"
+                      value: "This dataset contains temperature and precipitation measurements from weather stations across Los Angeles County from 2020-2023. Data includes daily maximum and minimum temperatures, precipitation totals, and humidity readings."
+              - typeName: "subject"
+                multiple: true
+                typeClass: "controlledVocabulary"
+                value:
+                  - "Earth and Environmental Sciences"
+    status_code: [200, 201]
+  register: dataset1_created
+
+- name: create sample weather data file
+  copy:
+    content: |
+      date,station_id,station_name,temp_max_f,temp_min_f,precip_inches,humidity_pct
+      2023-01-01,LAX,Los Angeles International Airport,68,52,0.00,65
+      2023-01-02,LAX,Los Angeles International Airport,71,54,0.00,58
+      2023-01-03,LAX,Los Angeles International Airport,65,48,0.12,72
+      2023-01-04,LAX,Los Angeles International Airport,62,45,0.45,85
+      2023-01-05,LAX,Los Angeles International Airport,64,47,0.08,78
+      2023-01-01,USC,Downtown Los Angeles,72,55,0.00,60
+      2023-01-02,USC,Downtown Los Angeles,75,58,0.00,52
+      2023-01-03,USC,Downtown Los Angeles,68,51,0.10,68
+      2023-01-04,USC,Downtown Los Angeles,64,48,0.38,82
+      2023-01-05,USC,Downtown Los Angeles,67,50,0.05,74
+    dest: /tmp/la_weather_sample.csv
+    mode: '0644'
+
+- name: upload weather data file to dataset
+  shell: |
+    curl -s -X POST -H "X-Dataverse-key:{{ api_token }}" \
+      -F "file=@/tmp/la_weather_sample.csv" \
+      -F 'jsonData={"description":"Sample weather data from LA weather stations","categories":["Data"]}' \
+      "{{ siteUrl_stripped }}/api/datasets/:persistentId/add?persistentId={{ dataset1_created.json.data.persistentId }}"
+  when: dataset1_created.status in [200, 201]
+
+- name: publish first dataset
+  uri:
+    url: "{{ siteUrl_stripped }}/api/datasets/:persistentId/actions/:publish?persistentId={{ dataset1_created.json.data.persistentId }}&type=major"
+    method: POST
+    headers:
+      X-Dataverse-key: "{{ api_token }}"
+    status_code: [200, 201]
+  when: dataset1_created.status in [200, 201]
+
+- name: create second sample dataset (energy data)
+  uri:
+    url: "{{ siteUrl_stripped }}/api/dataverses/{{ dataverse.sampledata.collection_alias | default('ucla-dsc') }}/datasets"
+    method: POST
+    headers:
+      X-Dataverse-key: "{{ api_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      datasetVersion:
+        license:
+          name: "CC BY 4.0"
+          uri: "http://creativecommons.org/licenses/by/4.0"
+        metadataBlocks:
+          citation:
+            fields:
+              - typeName: "title"
+                multiple: false
+                typeClass: "primitive"
+                value: "UCLA Campus Building Energy Usage Dataset"
+              - typeName: "author"
+                multiple: true
+                typeClass: "compound"
+                value:
+                  - authorName:
+                      typeName: "authorName"
+                      multiple: false
+                      typeClass: "primitive"
+                      value: "Johnson, Michael"
+                    authorAffiliation:
+                      typeName: "authorAffiliation"
+                      multiple: false
+                      typeClass: "primitive"
+                      value: "UCLA Facilities Management"
+                  - authorName:
+                      typeName: "authorName"
+                      multiple: false
+                      typeClass: "primitive"
+                      value: "Chen, Lisa"
+                    authorAffiliation:
+                      typeName: "authorAffiliation"
+                      multiple: false
+                      typeClass: "primitive"
+                      value: "UCLA Data Science Center"
+              - typeName: "datasetContact"
+                multiple: true
+                typeClass: "compound"
+                value:
+                  - datasetContactEmail:
+                      typeName: "datasetContactEmail"
+                      multiple: false
+                      typeClass: "primitive"
+                      value: "{{ dataverse.sampledata.contact_email | default('datascience@library.ucla.edu') }}"
+                    datasetContactName:
+                      typeName: "datasetContactName"
+                      multiple: false
+                      typeClass: "primitive"
+                      value: "{{ dataverse.sampledata.collection_name | default('UCLA Data Science Center') }}"
+              - typeName: "dsDescription"
+                multiple: true
+                typeClass: "compound"
+                value:
+                  - dsDescriptionValue:
+                      typeName: "dsDescriptionValue"
+                      multiple: false
+                      typeClass: "primitive"
+                      value: "Monthly energy consumption data for UCLA campus buildings from 2019-2023. Includes electricity usage (kWh), natural gas consumption (therms), and water usage (gallons) for administrative, academic, and residential buildings."
+              - typeName: "subject"
+                multiple: true
+                typeClass: "controlledVocabulary"
+                value:
+                  - "Engineering"
+                  - "Social Sciences"
+              - typeName: "keyword"
+                multiple: true
+                typeClass: "compound"
+                value:
+                  - keywordValue:
+                      typeName: "keywordValue"
+                      multiple: false
+                      typeClass: "primitive"
+                      value: "energy consumption"
+                  - keywordValue:
+                      typeName: "keywordValue"
+                      multiple: false
+                      typeClass: "primitive"
+                      value: "sustainability"
+                  - keywordValue:
+                      typeName: "keywordValue"
+                      multiple: false
+                      typeClass: "primitive"
+                      value: "campus facilities"
+    status_code: [200, 201]
+  register: dataset2_created
+
+- name: create sample energy data file
+  copy:
+    content: |
+      year,month,building_name,building_type,electricity_kwh,gas_therms,water_gallons
+      2023,1,Powell Library,Academic,125000,3200,45000
+      2023,1,Murphy Hall,Administrative,98000,2800,32000
+      2023,1,Hedrick Hall,Residential,210000,5100,125000
+      2023,2,Powell Library,Academic,118000,2900,42000
+      2023,2,Murphy Hall,Administrative,95000,2600,30000
+      2023,2,Hedrick Hall,Residential,195000,4800,118000
+      2023,3,Powell Library,Academic,115000,2100,44000
+      2023,3,Murphy Hall,Administrative,92000,1900,31000
+      2023,3,Hedrick Hall,Residential,180000,3500,120000
+    dest: /tmp/ucla_energy_sample.csv
+    mode: '0644'
+
+- name: upload energy data file to dataset
+  shell: |
+    curl -s -X POST -H "X-Dataverse-key:{{ api_token }}" \
+      -F "file=@/tmp/ucla_energy_sample.csv" \
+      -F 'jsonData={"description":"Sample energy usage data for UCLA campus buildings","categories":["Data"]}' \
+      "{{ siteUrl_stripped }}/api/datasets/:persistentId/add?persistentId={{ dataset2_created.json.data.persistentId }}"
+  when: dataset2_created.status in [200, 201]
+
+- name: publish second dataset
+  uri:
+    url: "{{ siteUrl_stripped }}/api/datasets/:persistentId/actions/:publish?persistentId={{ dataset2_created.json.data.persistentId }}&type=major"
+    method: POST
+    headers:
+      X-Dataverse-key: "{{ api_token }}"
+    status_code: [200, 201]
+  when: dataset2_created.status in [200, 201]
+
+- name: mark sample data as created
+  file:
+    path: '/tmp/dataverse'
+    state: directory
+
+- name: mark root dataverse as published
+  file:
+    path: '/tmp/dataverse/root_dv_published'
+    state: touch
+
+- name: mark sample data complete
+  file:
+    path: '/tmp/dataverse/sampledata_api_complete'
+    state: touch
+
+- name: give dataverse a breather
+  wait_for:
+    timeout: 5

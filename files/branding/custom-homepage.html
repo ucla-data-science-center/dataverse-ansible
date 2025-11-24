@@ -1,0 +1,157 @@
+<div class="container" id="ucla-homepage">
+
+    <!-- Hero Section -->
+    <div class="row">
+        <div class="col-md-8">
+            <h2>Welcome to UCLA Dataverse</h2>
+            <p class="lead">
+                A research data repository for UCLA researchers to share, archive, and cite research data.
+                Managed by the <a href="https://www.library.ucla.edu/about/about-ucla-library/data-science-center" target="_blank">UCLA Library Data Science Center</a>.
+            </p>
+        </div>
+    </div>
+
+    <!-- Search Section -->
+    <div class="row uclaSearch">
+        <div class="col-sm-12">
+            <div class="searchContainer">
+                <h3>Search Datasets</h3>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="ucla-search-input"
+                           placeholder="Search for datasets in UCLA Dataverse...">
+                    <span class="input-group-btn">
+                        <button class="btn btn-primary" type="button" onclick="uclaSearch()">
+                            Search
+                        </button>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="row" style="margin-top: 40px;">
+        <!-- Left: Get Started -->
+        <div class="col-md-7">
+            <div class="leadContent">
+                <div class="customWell well">
+                    <h3>Get Started</h3>
+                    <p><strong>Sharing your data is easy:</strong></p>
+                    <ol>
+                        <li><strong>Create an account</strong> or log in with your UCLA credentials</li>
+                        <li><strong>Request a dataverse</strong> for your project, lab, or department</li>
+                        <li><strong>Upload your files</strong> and add metadata descriptions</li>
+                        <li><strong>Publish</strong> to receive a DOI for citation</li>
+                    </ol>
+                    <p style="margin-top: 20px;">
+                        <a href="/dataverseuser.xhtml?editMode=CREATE" class="btn btn-primary">
+                            Create Account
+                        </a>
+                        <a href="/dataverse/root" class="btn btn-default" style="margin-left: 8px;">
+                            Browse Datasets
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Help -->
+        <div class="col-md-5">
+            <div class="leadContent">
+                <div class="customWell well">
+                    <h3>Need Help?</h3>
+                    <ul class="list-unstyled" style="margin: 16px 0;">
+                        <li style="margin-bottom: 12px;">
+                            <strong><a href="https://guides.dataverse.org/en/latest/user/" target="_blank">User Guide</a></strong><br>
+                            <span style="color: #666;">Step-by-step instructions for using Dataverse</span>
+                        </li>
+                        <li style="margin-bottom: 12px;">
+                            <strong><a href="https://www.library.ucla.edu/about/about-ucla-library/data-science-center" target="_blank">Data Science Center</a></strong><br>
+                            <span style="color: #666;">Consultations, workshops, and data services</span>
+                        </li>
+                        <li style="margin-bottom: 12px;">
+                            <strong><a href="mailto:datascience@library.ucla.edu">Contact Us</a></strong><br>
+                            <span style="color: #666;">Email datascience@library.ucla.edu</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Featured Collections -->
+    <div class="row featuredDataverses">
+        <div class="col-sm-12">
+            <h3>Featured Collections</h3>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <a href="/dataverse/root">Browse All</a>
+                    </h4>
+                </div>
+                <div class="panel-body">
+                    Explore all publicly available research datasets from UCLA researchers across all disciplines.
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <a href="https://www.library.ucla.edu/about/about-ucla-library/data-science-center/research-data-management" target="_blank">Data Management</a>
+                    </h4>
+                </div>
+                <div class="panel-body">
+                    Learn about research data management best practices, data management plans, and UCLA data policies.
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <a href="https://www.library.ucla.edu/about/about-ucla-library/data-science-center" target="_blank">Data Science Center</a>
+                    </h4>
+                </div>
+                <div class="panel-body">
+                    Visit the UCLA Library Data Science Center for workshops, consultations, and research support.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="row depositBanner">
+        <div class="col-sm-12">
+            <div class="alert alert-info">
+                <h4>Ready to deposit your data?</h4>
+                <p>
+                    UCLA researchers can deposit data for free. Your data will receive a DOI for citation
+                    and will be preserved by the UCLA Library.
+                    <a href="/dataverseuser.xhtml?editMode=CREATE" class="alert-link">Get started now</a> or
+                    <a href="mailto:datascience@library.ucla.edu" class="alert-link">contact us</a> for help.
+                </p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function uclaSearch() {
+    var query = document.getElementById('ucla-search-input').value;
+    if (query) {
+        window.location.href = '/dataverse/root?q=' + encodeURIComponent(query);
+    } else {
+        window.location.href = '/dataverse/root';
+    }
+}
+
+document.getElementById('ucla-search-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        uclaSearch();
+    }
+});
+</script>

@@ -11,14 +11,16 @@
   debug:
     msg: '##### Applying GUI design #####'
 
-- name: Copy favicons
+- name: Copy favicon files (ico, png)
   copy:
     src: '{{ item }}'
     dest: '{{ favicon_file_path }}'
     mode: '0644'
     owner: '{{ dataverse.payara.user }}'
     group: '{{ dataverse.payara.group }}'
-  with_fileglob: '{{ dataverse.branding.favicons_directory }}/*.ico'
+  with_fileglob:
+    - '{{ dataverse.branding.favicons_directory }}/*.ico'
+    - '{{ dataverse.branding.favicons_directory }}/*.png'
 
 - name: Copy branding files
   copy:
@@ -28,13 +30,22 @@
     group: '{{ dataverse.payara.group }}'
     mode: '0644'
 
-- name: Update branding file settings on server
+- name: Update branding file settings on server (filesystem paths)
   uri:
     url: http://localhost:8080/api/admin/settings/:{{ item.setting }}
     method: PUT
-    body: '/branding/{{ item.file }}'
+    body: '{{ gui_file_path }}/branding/{{ item.file }}'
     status_code: 200
   with_items: '{{ dataverse.branding.fileSettings }}'
+  when: item.setting != 'LogoCustomizationFile'
+
+- name: Update logo setting on server (URL path)
+  uri:
+    url: http://localhost:8080/api/admin/settings/:LogoCustomizationFile
+    method: PUT
+    body: '/branding/{{ dataverse.branding.logoFile | default("dataverseUCLA_logo.png") }}'
+    status_code: 200
+  when: dataverse.branding.fileSettings | selectattr('setting', 'equalto', 'LogoCustomizationFile') | list | length > 0
 
 
 - name: Update other branding settings on server

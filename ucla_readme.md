@@ -111,6 +111,16 @@ We've made several improvements that will be contributed back to upstream:
 - **16 testinfra tests** covering services, ports, health, security
 - All tests passing in CI/molecule workflow
 
+### ✅ UCLA Branding & Customization (Completed)
+- **Custom header, footer, homepage** - UCLA Library themed pages
+- **UCLA logo** - Combined UCLA letterforms + "Dataverse" wordmark
+- **Favicons** - UCLA-themed 2-ring Dataverse icons
+- **CSS overrides** - Collection/dataset/file icons in UCLA colors
+- **Support portal integration** - NavbarSupportUrl points to UCLA Jira
+- **Metadata blocks** - HELADA (heritage language), geospatial, social science, astrophysics, biomedical, journals
+- **Language packs** - English, Spanish, Chinese, Japanese, Korean
+- **Sample data API** - Reliable API-based sample data creation
+
 ### 📝 Documentation (Completed)
 - Comprehensive troubleshooting guide
 - Configuration strategy docs

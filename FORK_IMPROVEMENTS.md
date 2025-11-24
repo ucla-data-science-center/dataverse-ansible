@@ -260,15 +260,20 @@ dataverse:
 **Current approach:** Always destroy + converge for testing
 **Potential upstream:** Add check for existing installation, skip if present
 
-### Shibboleth Configuration Idempotency
+### Shibboleth Configuration Idempotency ✅ FIXED
 
-**File:** `tasks/shibboleth.yml:100`
-**Issue:** Same `when: download.changed` pattern
-**Current code:**
+**Date:** 2025-11-20
+**Files Modified:** `tasks/shibboleth.yml:92-109`
+**Issue:** Same `when: download.changed` pattern as Solr/Payara
+
+### Problem
+
+The task registered Shibboleth auth provider based on file download state:
+
 ```yaml
 - name: get shibAuthProvider.json to host
   get_url:
-    url: http://guides.dataverse.org/...
+    url: http://guides.dataverse.org/.../shibAuthProvider.json
     dest: /tmp/shibAuthProvider.json
   register: shibAuthProvider_json_download
 
@@ -279,27 +284,103 @@ dataverse:
     src: /tmp/shibAuthProvider.json
   when: shibAuthProvider_json_download.changed  # ← PROBLEM
 ```
-**Impact:** Low - only affects re-runs with Shibboleth enabled
-**Fix:** Check if authentication provider already registered via API
 
-### Log4j CVE Mitigation
+**This breaks when:**
+- File already exists (download changed=false, registration skipped)
+- Re-running converge causes duplicate provider errors
+- Not truly idempotent
 
-**File:** `tasks/solr.yml:74-79`
-**Issue:** Attempts to remove JndiLookup.class already removed in Solr 9.8+
-**Current:** `ignore_errors: yes` suppresses failure
-**Improvement:** Check if class exists before attempting removal:
+### Solution
+
+Check Dataverse API for existing provider:
 
 ```yaml
-- name: check if JndiLookup.class exists
-  shell: unzip -l {{ dataverse.solr.root }}/server/lib/ext/log4j-core-*.jar | grep JndiLookup.class
+- name: get shibAuthProvider.json to host
+  get_url:
+    url: http://guides.dataverse.org/.../shibAuthProvider.json
+    dest: /tmp/shibAuthProvider.json
+
+- name: check if shibboleth authentication provider already exists
+  uri:
+    url: http://localhost:8080/api/admin/authenticationProviders
+    method: GET
+    return_content: yes
+  register: existing_auth_providers
+  failed_when: false
+  changed_when: false
+
+- name: enable shibboleth authentication in dataverse
+  uri:
+    url: http://localhost:8080/api/admin/authenticationProviders
+    method: POST
+    src: /tmp/shibAuthProvider.json
+    body_format: json
+    remote_src: yes
+    status_code: 201
+  when: existing_auth_providers.status == 200 and
+        (existing_auth_providers.json.data | selectattr('id', 'equalto', 'shib') | list | length == 0)
+```
+
+### Benefits
+
+1. ✅ **True idempotency** - Can run multiple times safely
+2. ✅ **Works with pre-downloaded files** - Doesn't depend on download state
+3. ✅ **Proper state checking** - Checks actual Dataverse API state
+4. ✅ **No duplicate provider errors** on re-run
+5. ✅ **Follows same pattern** as Solr/Payara/Log4j fixes
+
+### Log4j CVE Mitigation ✅ FIXED
+
+**Date:** 2025-11-20
+**Files Modified:** `tasks/solr.yml:80-92`
+**Issue:** Attempts to remove JndiLookup.class already removed in Solr 9.8+
+**Old behavior:** `ignore_errors: yes` suppresses failure
+
+### Problem
+
+The task tried to remove `JndiLookup.class` from log4j to mitigate CVE-2021-44228:
+
+```yaml
+- name: remove JndiLookup.class from log4j-core.jar
+  ansible.builtin.shell:
+    cmd: 'zip -q -d {{ dataverse.solr.root }}/server/lib/ext/log4j-core-*.jar org/apache/logging/log4j/core/lookup/JndiLookup.class'
+  become: yes
+  become_user: root
+  ignore_errors: yes  # ← PROBLEM: Masks all errors
+```
+
+**This breaks when:**
+- Newer Solr versions (9.8+) already removed the vulnerable class
+- Command fails with "nothing to do" error
+- `ignore_errors: yes` masks real problems
+
+### Solution
+
+Added existence check before removal:
+
+```yaml
+- name: check if JndiLookup.class exists in log4j-core.jar
+  ansible.builtin.shell:
+    cmd: 'unzip -l {{ dataverse.solr.root }}/server/lib/ext/log4j-core-*.jar | grep -q JndiLookup.class'
   register: jndilookup_check
   failed_when: false
   changed_when: false
 
 - name: remove JndiLookup.class from log4j-core.jar
-  shell: zip -q -d {{ dataverse.solr.root }}/server/lib/ext/log4j-core-*.jar org/apache/logging/log4j/core/lookup/JndiLookup.class
-  when: jndilookup_check.rc == 0
+  ansible.builtin.shell:
+    cmd: 'zip -q -d {{ dataverse.solr.root }}/server/lib/ext/log4j-core-*.jar org/apache/logging/log4j/core/lookup/JndiLookup.class'
+  become: yes
+  become_user: root
+  when: jndilookup_check.rc == 0  # Only run if class exists
 ```
+
+### Benefits
+
+1. ✅ **Clean output** - No more "failed" messages on newer Solr
+2. ✅ **Real error detection** - If removal fails when class exists, we'll know
+3. ✅ **Works with any Solr version** - Old or new
+4. ✅ **True idempotency** - Check state before action
+5. ✅ **Follows Ansible best practices**
 
 ---
 
@@ -310,6 +391,48 @@ dataverse:
 - `FORK_IMPROVEMENTS.md` - This file, tracking fork-specific improvements
 - Updated `CLAUDE.md` - AI assistant context with uv workflow
 
+## Molecule/Docker Testing Improvements
+
+### Docker Container Preparation ✅ FIXED
+
+**Date:** 2025-11-20
+**Files Modified:** `molecule/rocky9/prepare.yml`
+
+**Problem:** Minimal Docker containers don't have `sudo` or `which` commands that the playbook expects.
+
+**Solution:** Install required utilities in prepare phase:
+```yaml
+- name: Install sudo and which (required for Docker containers)
+  ansible.builtin.raw: dnf install -y sudo which
+  changed_when: false
+```
+
+### Site.yml Playbook Role Inclusion ✅ FIXED
+
+**Date:** 2025-11-20
+**Files Modified:** `site.yml:44-54`
+
+**Problem:** `role: .` syntax doesn't work properly with Ansible.
+
+**Solution:** Use `include_role` with `playbook_dir` variable:
+```yaml
+tasks:
+  - name: Include dataverse role tasks
+    ansible.builtin.include_role:
+      name: "{{ playbook_dir }}"
+      apply:
+        tags: all
+```
+
+### Group Vars File Naming ✅ FIXED
+
+**Date:** 2025-11-20
+**Files Modified:** `molecule/rocky9/group_vars/`
+
+**Problem:** Variables file was named `molecule.yml` but needed to be `all.yml` or match inventory group name.
+
+**Solution:** Renamed `molecule.yml` → `all.yml` to apply to all hosts in inventory.
+
 ## Tooling Improvements
 
 - Migrated from conda + pip-tools to **uv** for dependency management
@@ -317,6 +440,179 @@ dataverse:
 - Added `Makefile` with `bootstrap` target for collection installation
 - Created `.python-version` for consistent Python 3.11 usage
 - Updated `.gitignore` for uv virtual environments
+- **Fixed molecule/Docker testing** - prepare.yml, site.yml, group_vars structure
+
+---
+
+## UCLA Branding and Customization ✅ COMPLETED
+
+**Date:** 2025-11-24
+**Files Modified:** Multiple branding files, defaults/main.yml, tasks/dataverse-gui.yml, tasks/dataverse-optional-settings.yml
+**Purpose:** Full UCLA Library themed Dataverse instance
+
+### Custom Branding Files
+
+Created complete UCLA branding matching library.ucla.edu design:
+
+**New Files:**
+- `files/branding/custom-header.html` - UCLA Library themed header
+- `files/branding/custom-footer.html` - UCLA footer with social links, service portal links
+- `files/branding/custom-homepage.html` - UCLA Dataverse homepage
+- `files/branding/custom-stylesheet.css` - UCLA colors (#2774AE blue, #FFD100 gold, #003B5C dark blue)
+- `files/branding/logo_UCLA_Dataverse.svg` - Combined UCLA letterforms + "Dataverse" wordmark
+- `files/branding/dataverseUCLA_logo.png` - PNG version for header (172x50px)
+
+**Favicon Files:**
+- `files/favicons/favicon.ico` - Multi-resolution .ico file
+- `files/favicons/favicon-16x16.png` - Small icon
+- `files/favicons/favicon-32x32.png` - Standard icon
+- `files/favicons/apple-touch-icon.png` - iOS home screen (180x180)
+- `files/favicons/dataverse_2ring_ucla.svg` - UCLA-themed 2-ring icon (source)
+
+### Metadata Blocks Configuration
+
+Added comprehensive metadata block support in `defaults/main.yml`:
+
+```yaml
+custom_metadata_blocks:
+  enabled: true
+  urls:
+    - CodeMeta (software/code)
+    - HELADA (UCLA heritage language custom block)
+    - Geospatial
+    - Social Science & Humanities
+    - Astrophysics
+    - Biomedical/Life Sciences
+    - Journals
+```
+
+**UCLA Custom Block:**
+- https://github.com/ucla-data-science-center/dataverse-custom-metadata
+- HELADA metadata for Heritage Language Institute
+- 16 specialized fields for language research data
+
+### Language Packs
+
+Expanded language support for UCLA's diverse community:
+
+```yaml
+language:
+  enabled: true
+  languages:
+   - English (en_US)
+   - Spanish (es_ES)
+   - Chinese Simplified (zh_CN)  # NEW
+   - Japanese (ja_JP)            # NEW
+   - Korean (ko_KR)              # NEW
+```
+
+### Support Portal Integration
+
+Integrated UCLA Jira service portal:
+
+**Configuration (`defaults/main.yml`):**
+```yaml
+branding:
+  support_url: "https://uclalibrary.atlassian.net/servicedesk/customer/portal/5/group/13/create/46"
+```
+
+**Implementation (`tasks/dataverse-optional-settings.yml`):**
+```yaml
+- name: set NavbarSupportUrl to UCLA Jira service portal
+  uri:
+    url: "{{ dataverse.api.location }}/admin/settings/:NavbarSupportUrl"
+    method: PUT
+    body: "{{ dataverse.branding.support_url }}"
+    status_code: 200
+  when: dataverse.branding.support_url is defined
+```
+
+**Result:** "Support" navbar link now opens UCLA Library Jira portal instead of built-in contact form.
+
+### CSS Icon Color Overrides
+
+Custom CSS to change Dataverse icon colors from burnt orange to UCLA blue:
+
+```css
+/* Collection icons: UCLA blue */
+.icon-dataverse, .text-dataverse {
+    color: #2774AE !important;
+}
+
+/* Dataset icons: UCLA dark blue */
+.icon-dataset, .text-dataset {
+    color: #003B5C !important;
+}
+
+/* File icons: neutral grey */
+.icon-file, .text-file {
+    color: #757575 !important;
+}
+```
+
+**Method:** CSS overrides (modern approach) instead of deprecated FontCustom icon font generation.
+
+### Sample Data API Implementation
+
+Created reliable API-based sample data instead of fragile Python script:
+
+**New File:** `tasks/sampledata-api.yml`
+
+**Configuration:**
+```yaml
+sampledata:
+  enabled: false
+  use_api: true  # Use API instead of Python script
+  collection_name: "UCLA Data Science Center"
+  collection_alias: "ucla-dsc"
+  collection_description: "Research data from the UCLA Library Data Science Center."
+  contact_email: "datascience@library.ucla.edu"
+  affiliation: "UCLA Library"
+```
+
+**Benefits:**
+- ✅ No Python dependencies or virtualenv issues
+- ✅ Uses Dataverse REST API directly via Ansible `uri` module
+- ✅ Creates collection + 2 sample datasets
+- ✅ Reliable for testing and demos
+
+### Branding Deployment Fixes
+
+Fixed critical path issue in `tasks/dataverse-gui.yml`:
+
+**Problem:** LogoCustomizationFile needs **URL path**, other settings need **filesystem paths**.
+
+**Solution:**
+```yaml
+# Most branding files use filesystem paths
+- name: Update branding file settings (filesystem paths)
+  uri:
+    body: '{{ gui_file_path }}/branding/{{ item.file }}'
+  when: item.setting != 'LogoCustomizationFile'
+
+# Logo is the exception - needs URL path
+- name: Update logo setting (URL path)
+  uri:
+    body: '/branding/{{ dataverse.branding.logoFile }}'
+  when: item.setting == 'LogoCustomizationFile'
+```
+
+### Benefits
+
+1. **Complete UCLA branding** - Header, footer, logo, colors match library.ucla.edu
+2. **Comprehensive metadata support** - 7 metadata blocks for diverse research needs
+3. **Multilingual interface** - Serves UCLA's international community
+4. **Integrated support** - Direct link to UCLA service portal
+5. **Reliable testing** - API-based sample data works consistently
+6. **Professional appearance** - UCLA-themed favicons and icons
+
+### Upstream Contribution
+
+**Status:** UCLA-specific customization, not for upstream
+**Reasoning:**
+- Branding files are institution-specific
+- Configuration pattern (support_url, metadata blocks, languages) could be useful examples
+- Sample data API approach could benefit upstream as an alternative to Python script
 
 ---
 

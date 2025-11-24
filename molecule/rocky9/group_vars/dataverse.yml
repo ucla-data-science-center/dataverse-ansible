@@ -115,9 +115,15 @@ dataverse:
         file: custom-stylesheet.css
       - setting: LogoCustomizationFile
         file: dataverseUCLA_logo.png
+      - setting: HomePageCustomizationFile
+        file: custom-homepage.html
+      - setting: FooterCustomizationFile
+        file: custom-footer.html
     otherSettings:
       - setting: FooterCopyright
         value: " UC Regents"
+      - setting: InstallationName
+        value: "UCLA Dataverse"
   language:
     enabled: true
     languages:
@@ -202,7 +208,14 @@ dataverse:
     home: /tmp/jacoco
     version: 0.8.12
   sampledata:
-    enabled: false  # Disabled - IQSS sample data scripts are fragile and fail on API timeouts
+    enabled: true
+    use_api: true  # Use reliable API-based sample data instead of fragile Python scripts
+    collection_name: "UCLA Data Science Center"
+    collection_alias: "ucla-dsc"
+    collection_description: "Research data from the UCLA Library Data Science Center. We support UCLA researchers with data management, analysis, and sharing."
+    contact_email: "datascience@library.ucla.edu"
+    affiliation: "UCLA Library"
+    # Legacy settings (only used if use_api: false)
     dir: /tmp/sampledata
     repo: https://github.com/IQSS/dataverse-sample-data.git
     branch: master
