@@ -552,6 +552,27 @@ Custom CSS to change Dataverse icon colors from burnt orange to UCLA blue:
 
 **Method:** CSS overrides (modern approach) instead of deprecated FontCustom icon font generation.
 
+### Root Dataverse Customization
+
+Added ability to customize root dataverse metadata instead of generic "Root" name:
+
+**New File:** `tasks/dataverse-root-customize.yml`
+
+**Configuration:**
+```yaml
+root:
+  name: "UCLA Dataverse"
+  affiliation: "UCLA Library"
+  description: "UCLA Dataverse is a repository for research data and related materials produced by the UCLA community. Powered by the open-source Dataverse software."
+```
+
+**Implementation:**
+- Uses PUT `/api/dataverses/root` to update metadata
+- Runs after GUI branding, before sample data
+- Tags: `root`, `branding`
+
+**Note:** The alias "root" cannot be changed (Dataverse requirement), but name, affiliation, and description can be customized for institutional branding.
+
 ### Sample Data API Implementation
 
 Created reliable API-based sample data instead of fragile Python script:
