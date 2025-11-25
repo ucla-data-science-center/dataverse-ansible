@@ -1,0 +1,39 @@
+---
+# dataverse/tasks/dataverse-root-customize.yml
+# Customize root dataverse metadata (name, affiliation, description)
+# NOTE: The alias "root" cannot be changed - it's required by Dataverse
+
+- name: customize root dataverse metadata
+  debug:
+    msg: '##### CUSTOMIZE ROOT DATAVERSE METADATA #####'
+
+# grab siteUrl so this can run standalone
+- ansible.builtin.import_tasks: dataverse-fqdn.yml
+
+# grab apitoken so this can run standalone
+- ansible.builtin.import_tasks: dataverse-apitoken.yml
+
+- name: strip backslash from siteUrl
+  set_fact:
+    siteUrl_stripped: '{{ siteUrl | regex_replace("\\\\", "") }}'
+
+- name: update root dataverse metadata (name, affiliation, description)
+  uri:
+    url: "{{ siteUrl_stripped }}/api/dataverses/root"
+    method: PUT
+    headers:
+      X-Dataverse-key: "{{ api_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      name: "{{ dataverse.root.name | default('UCLA Dataverse') }}"
+      affiliation: "{{ dataverse.root.affiliation | default('UCLA Library') }}"
+      description: "{{ dataverse.root.description | default('UCLA Dataverse is a repository for research data and related materials produced by the UCLA community. Powered by the open-source Dataverse software.') }}"
+    status_code: [200]
+  register: root_customize
+  failed_when: false
+
+- name: display root dataverse customization result
+  debug:
+    var: root_customize.json
+  when: root_customize.status == 200

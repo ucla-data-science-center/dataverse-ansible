@@ -126,6 +126,12 @@
   - gui
   when: dataverse.branding.enabled
 
+- ansible.builtin.import_tasks: dataverse-root-customize.yml
+  tags:
+  - root
+  - branding
+  when: dataverse.root is defined
+
 - ansible.builtin.import_tasks: shibboleth.yml
   when: shibboleth.enabled == True
   tags:

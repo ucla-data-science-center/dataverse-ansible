@@ -81,6 +81,10 @@ dataverse:
        value: " UC Regents"
      - setting: InstallationName
        value: "UCLA Dataverse"
+  root:
+    name: "UCLA Dataverse"
+    affiliation: "UCLA Library"
+    description: "UCLA Dataverse is a repository for research data and related materials produced by the UCLA community. Powered by the open-source Dataverse software."
   language:
     enabled: true # setting this to true allows the language task to run
     languages:
