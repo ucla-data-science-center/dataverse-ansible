@@ -1,0 +1,57 @@
+---
+# dataverse/tasks/dataverse-harvest-clients.yml
+# Configure OAI-PMH harvesting clients to import metadata from remote repositories
+#
+# Based on Dataverse Admin Guide:
+# https://guides.dataverse.org/en/latest/admin/harvestclients.html
+
+- name: configure harvesting clients
+  debug:
+    msg: '##### CONFIGURE HARVESTING CLIENTS #####'
+
+# grab siteUrl so this can run standalone
+- ansible.builtin.import_tasks: dataverse-fqdn.yml
+
+# grab apitoken so this can run standalone
+- ansible.builtin.import_tasks: dataverse-apitoken.yml
+
+- name: strip backslash from siteUrl
+  set_fact:
+    siteUrl_stripped: '{{ siteUrl | regex_replace("\\\\", "") }}'
+
+- name: create harvesting clients
+  uri:
+    url: "{{ siteUrl_stripped }}/api/harvest/clients"
+    method: POST
+    headers:
+      X-Dataverse-key: "{{ api_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      dataverseAlias: "{{ item.dataverse_alias | default('root') }}"
+      name: "{{ item.nickname }}"
+      harvestingUrl: "{{ item.server_url }}"
+      archiveUrl: "{{ item.archive_url | default(item.server_url | regex_replace('/oai$', '')) }}"
+      archiveDescription: "{{ item.archive_description | default('This Dataset is harvested from our partners. Clicking the link will take you directly to the archival source of the data.') }}"
+      metadataPrefix: "{{ item.metadata_format | default('oai_ddi') }}"
+      harvestingSet: "{{ item.oai_set | default('') }}"
+      harvestStyle: "{{ item.archive_type | default('default') }}"
+      customHttpHeaders: "{{ item.custom_headers | default('') }}"
+      scheduled: "{{ item.schedule | default(false) }}"
+      schedulePeriod: "{{ item.schedule_period | default('') }}"
+      scheduleHourOfDay: "{{ item.schedule_hour | default(0) }}"
+      scheduleDayOfWeek: "{{ item.schedule_day | default(0) }}"
+    status_code: [200, 201]
+  with_items: "{{ dataverse.harvest_clients }}"
+  register: harvest_clients_created
+  failed_when: false
+  when: dataverse.harvest_clients is defined
+
+- name: display harvesting client creation results
+  debug:
+    msg: "Created harvesting client '{{ item.item.nickname }}': {{ item.status }}"
+  with_items: "{{ harvest_clients_created.results }}"
+  when:
+    - dataverse.harvest_clients is defined
+    - harvest_clients_created.results is defined
+    - item.status in [200, 201]

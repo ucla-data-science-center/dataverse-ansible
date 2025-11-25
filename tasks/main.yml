@@ -181,6 +181,12 @@
   tags:
   - externaltools
 
+- ansible.builtin.import_tasks: dataverse-harvest-clients.yml
+  when: dataverse.harvest_clients is defined
+  tags:
+  - harvest
+  - harvestclients
+
 - ansible.builtin.import_tasks: prometheus.yml
   when: prometheus.install == true
   tags:
