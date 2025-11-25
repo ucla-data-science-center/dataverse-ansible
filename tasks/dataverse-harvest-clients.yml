@@ -21,14 +21,13 @@
 
 - name: create harvesting clients
   uri:
-    url: "{{ siteUrl_stripped }}/api/harvest/clients"
+    url: "{{ siteUrl_stripped }}/api/dataverses/{{ item.dataverse_alias | default('root') }}/harvestingclients"
     method: POST
     headers:
       X-Dataverse-key: "{{ api_token }}"
       Content-Type: "application/json"
     body_format: json
     body:
-      dataverseAlias: "{{ item.dataverse_alias | default('root') }}"
       name: "{{ item.nickname }}"
       harvestingUrl: "{{ item.server_url }}"
       archiveUrl: "{{ item.archive_url | default(item.server_url | regex_replace('/oai$', '')) }}"

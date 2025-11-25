@@ -277,6 +277,24 @@ dataverse:
       enabled: true
     wholetale:
       enabled: false
+  root:
+    name: "UCLA Dataverse"
+    affiliation: "UCLA Library"
+    description: "UCLA Dataverse is a repository for research data and related materials produced by the UCLA community. Powered by the open-source Dataverse software."
+  harvest_clients:
+    - nickname: "social-science-data-archive"
+      server_url: "https://dataverse.harvard.edu/oai"
+      oai_set: "UCLA_SSDA"
+      metadata_format: "oai_ddi"
+      schedule: false
+      schedule_period: ""
+      schedule_hour: 0
+      schedule_day: 0
+      archive_type: "dataverse"
+      archive_url: "https://dataverse.harvard.edu"
+      archive_description: "This Dataset is harvested from our partners. Clicking the link will take you directly to the archival source of the data."
+      dataverse_alias: "root"
+      custom_headers: ""
   handlenet:
     independenthandleservice: 'false'
   solr:

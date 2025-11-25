@@ -126,7 +126,7 @@
   - gui
   when: dataverse.branding.enabled
 
-- ansible.builtin.import_tasks: dataverse-root-customize.yml
+- ansible.builtin.include_tasks: dataverse-root-customize.yml
   tags:
   - root
   - branding
@@ -181,7 +181,7 @@
   tags:
   - externaltools
 
-- ansible.builtin.import_tasks: dataverse-harvest-clients.yml
+- ansible.builtin.include_tasks: dataverse-harvest-clients.yml
   when: dataverse.harvest_clients is defined
   tags:
   - harvest
