@@ -618,6 +618,32 @@ Fixed critical path issue in `tasks/dataverse-gui.yml`:
   when: item.setting == 'LogoCustomizationFile'
 ```
 
+### OAI-PMH Harvesting Client Configuration
+
+Added automated configuration for OAI-PMH harvesting clients to import metadata from remote repositories:
+
+**New File:** `tasks/dataverse-harvest-clients.yml`
+
+**Configuration:**
+```yaml
+harvest_clients:
+  - nickname: "social-science-data-archive"
+    server_url: "https://dataverse.harvard.edu/oai"
+    oai_set: "UCLA_SSDA"
+    metadata_format: "oai_ddi"
+    schedule: false  # On-demand only
+    archive_type: "dataverse"
+    archive_url: "https://dataverse.harvard.edu"
+    dataverse_alias: "root"
+```
+
+**Implementation:**
+- Uses POST `/api/harvest/clients` with correct field names from HarvestingClient model
+- Supports scheduling (daily/weekly), custom HTTP headers, multiple clients
+- Tags: `harvest`, `harvestclients`
+
+**Use Case:** UCLA's historic Social Science Data Archive (SSDA) collection is hosted at Harvard Dataverse. This configuration makes those datasets searchable within UCLA Dataverse while maintaining links to the original Harvard source.
+
 ### Benefits
 
 1. **Complete UCLA branding** - Header, footer, logo, colors match library.ucla.edu
@@ -626,6 +652,7 @@ Fixed critical path issue in `tasks/dataverse-gui.yml`:
 4. **Integrated support** - Direct link to UCLA service portal
 5. **Reliable testing** - API-based sample data works consistently
 6. **Professional appearance** - UCLA-themed favicons and icons
+7. **Automated harvesting** - Historic SSDA collection from Harvard Dataverse
 
 ### Upstream Contribution
 
