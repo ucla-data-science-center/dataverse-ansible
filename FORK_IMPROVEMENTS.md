@@ -2,6 +2,125 @@
 
 This document tracks improvements made to the UCLA fork that may be contributed upstream later.
 
+## Let's Encrypt SSL Refactoring
+
+**Date:** 2025-12-01
+**Files Modified:** `tasks/certbot.yml`, `tasks/dataverse-apache.yml`, `templates/http.proxy.conf.j2`, `group_vars/staging.yml`
+**Issue:** Complex SSL setup with manual Apache reconfiguration and non-standard certbot usage
+
+### Problem
+
+The original certbot implementation used `certbot certonly --standalone` mode with extensive manual configuration:
+
+```yaml
+# Original approach
+- name: Stop services to allow certbot to generate a cert
+  ansible.builtin.service:
+    name: httpd
+    state: stopped
+
+- name: Generate new certificate
+  command: 'certbot certonly --standalone ...'
+
+- name: Enable SSL in apache config now that we have certificates
+  ansible.builtin.set_fact:
+    apache: "{{ apache | combine({'ssl': {'enabled': true}}) }}"
+
+- name: Regenerate Apache config to use certificates
+  template:
+    src: http.proxy.conf.j2
+    dest: "{{ apache_virtualhost_dir }}/http.proxy.conf"
+
+- name: Start services after cert has been generated
+  ansible.builtin.service:
+    name: httpd
+    state: started
+```
+
+**Issues:**
+1. **Non-standard approach** - Used standalone mode instead of Apache plugin
+2. **Manual configuration** - Required explicit Apache config regeneration
+3. **State management** - Used `set_fact` to enable SSL in memory (not persisted)
+4. **Complexity** - ~30 lines of code for certificate generation
+5. **Service disruption** - Manually stopped/started Apache
+6. **Renewal concerns** - Renewals might not update Apache config properly
+
+### Solution
+
+Refactored to use standard `certbot --apache` plugin with two-stage deployment:
+
+```yaml
+# New approach (simplified)
+- name: Check if certificate already exists
+  ansible.builtin.stat:
+    path: /etc/letsencrypt/live/{{ servername }}/cert.pem
+  register: letsencrypt_cert
+
+- name: Generate certificate and configure Apache automatically
+  ansible.builtin.command: 'certbot --apache --noninteractive --agree-tos --email {{ letsencrypt.certbot.email }} -d {{ servername }} --redirect'
+  when: not letsencrypt_cert.stat.exists
+```
+
+**Template improvements:**
+```jinja2
+# Added Let's Encrypt certificate path support
+{% if letsencrypt is defined and letsencrypt.enabled %}
+  SSLCertificateFile /etc/letsencrypt/live/{{ servername }}/fullchain.pem
+  SSLCertificateKeyFile /etc/letsencrypt/live/{{ servername }}/privkey.pem
+{% elif apache.ssl.remote_cert %}
+  # ... existing certificate handling
+{% endif %}
+```
+
+**Deployment process:**
+```yaml
+# Stage 1 - Deploy with HTTP
+apache.ssl.enabled: false
+letsencrypt.enabled: false
+
+# Stage 2 - Enable HTTPS (run playbook again)
+apache.ssl.enabled: true
+letsencrypt.enabled: true
+```
+
+### Benefits
+
+1. **Standard approach** - Uses certbot's native Apache plugin
+2. **Automatic configuration** - Certbot configures Apache VirtualHost
+3. **Automatic redirect** - HTTP→HTTPS redirect via `--redirect` flag
+4. **Less code** - Reduced from ~30 lines to ~10 lines
+5. **Better renewals** - Certbot knows how to renew Apache configs
+6. **Follows best practices** - Uses documented certbot workflow
+7. **Two-stage deployment** - Clear separation of HTTP and HTTPS setup
+8. **Idempotent** - Safe to run playbook multiple times
+
+### Testing
+
+Tested with:
+- ✅ Fresh staging deployment (staging.ucladataverse.dev)
+- ✅ Let's Encrypt certificate obtained successfully
+- ✅ Apache configured automatically
+- ✅ HTTP→HTTPS redirect working
+- ✅ Certbot-renew.timer enabled for auto-renewal
+- ✅ Re-running playbook is idempotent (skips if cert exists)
+
+### Documentation
+
+Created comprehensive documentation:
+- **DEPLOYMENT_GUIDE.md** - Step-by-step for new deployments
+- **REFACTORING_NOTES.md** - Technical details of changes
+- **group_vars/TEMPLATE.yml** - Template for new environments
+- **group_vars/staging.yml** - Two-stage deployment instructions
+
+### Upstream Contribution
+
+**Status:** Ready for upstream consideration
+**Justification:** Simplifies SSL setup, follows certbot best practices, reduces complexity
+**Compatibility:** Backward compatible - existing deployments unaffected
+**Trade-offs:** Requires two-stage deployment for new instances (acceptable pattern)
+
+---
+
 ## Solr Installation Idempotency Fix
 
 **Date:** 2025-11-16

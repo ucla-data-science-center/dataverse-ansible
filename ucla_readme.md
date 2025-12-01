@@ -15,14 +15,16 @@ We maintain several focused guides to help you work with this fork:
 | Document | Purpose | Audience |
 |----------|---------|----------|
 | **[TEAM_GUIDE.md](TEAM_GUIDE.md)** | Complete team handbook - start here! | All team members |
+| **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** | 🆕 Complete deployment guide (Terraform + Ansible) | DevOps/deployment |
 | **[MOLECULE_QUICK_REF.md](MOLECULE_QUICK_REF.md)** | Quick reference for common commands | Developers |
 | **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** | Solutions to common issues | Everyone |
-| **[AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md)** | AWS deployment guide | DevOps/deployment |
 | **[AWS_DEPLOYMENT_CHECKLIST.md](AWS_DEPLOYMENT_CHECKLIST.md)** | Quick deployment checklist | DevOps/deployment |
 | **[MIGRATION_5.14_TO_6.8.md](MIGRATION_5.14_TO_6.8.md)** | Production upgrade playbook | DevOps/migration |
 | **[CONFIG_STRATEGY.md](CONFIG_STRATEGY.md)** | Local vs AWS configuration approach | DevOps/Admins |
 | **[FORK_IMPROVEMENTS.md](FORK_IMPROVEMENTS.md)** | Track our changes vs upstream | Maintainers |
 | **[UPSTREAM_PR_DRAFT.md](UPSTREAM_PR_DRAFT.md)** | Ready-to-submit upstream PRs | Maintainers |
+
+> **Note:** [AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md) is deprecated - use [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) instead
 
 **👉 New team members: Start with [TEAM_GUIDE.md](TEAM_GUIDE.md)**
 

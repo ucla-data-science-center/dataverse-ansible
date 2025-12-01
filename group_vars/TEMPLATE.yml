@@ -1,10 +1,10 @@
-# group_vars/staging.yml
-# UCLA Dataverse staging environment configuration
+# group_vars/TEMPLATE.yml
+# Template for creating new environment configurations
 #
-# This file contains variables specific to the staging environment.
-# Variables in this file override defaults/main.yml
-#
-# See CONFIG_STRATEGY.md for configuration approach
+# Instructions:
+# 1. Copy this file to group_vars/your_environment_name.yml
+# 2. Replace ALL_CAPS placeholders with your values
+# 3. Use ansible-vault to encrypt sensitive values
 #
 # =============================================================================
 # TWO-STAGE DEPLOYMENT PROCESS
@@ -12,12 +12,12 @@
 #
 # Stage 1 - Initial Deployment (HTTP only):
 #   Set apache.ssl.enabled: false and letsencrypt.enabled: false
-#   Run: ansible-playbook -i inventory/staging.yml site.yml
+#   Run: ansible-playbook -i inventory/YOUR_ENVIRONMENT.yml site.yml
 #   This gets Dataverse running on HTTP (port 80)
 #
 # Stage 2 - Enable HTTPS with Let's Encrypt:
 #   Set apache.ssl.enabled: true and letsencrypt.enabled: true
-#   Run: ansible-playbook -i inventory/staging.yml site.yml
+#   Run: ansible-playbook -i inventory/YOUR_ENVIRONMENT.yml site.yml
 #   Certbot will automatically obtain SSL certificate and configure Apache
 #
 # After Stage 2, the site will be accessible via HTTPS with automatic renewals
@@ -28,29 +28,30 @@
 # DATAVERSE CORE CONFIGURATION
 # =============================================================================
 
-dataverse_hostname: staging.ucladataverse.dev
-dataverse_siteurl: "https://staging.ucladataverse.dev"  # HTTPS with Let's Encrypt
+dataverse_hostname: SUBDOMAIN.YOUR_DOMAIN.COM  # e.g., staging.example.edu
+dataverse_siteurl: "https://SUBDOMAIN.YOUR_DOMAIN.COM"
 dataverse_http_port: 8080
-dataverse_adminemail: "dataverse-admin@ucla.edu"  # REPLACE with your admin email
-dataverse_service_email: "noreply-dataverse@ucla.edu"  # REPLACE with your service email
-dataverse_system_email: "noreply-dataverse@ucla.edu"  # System email for Dataverse notifications
-dataverse_adminpass: "CHANGE_ME_IN_VAULT"  # TODO: Move to ansible-vault
+dataverse_adminemail: "YOUR_ADMIN_EMAIL"  # e.g., admin@example.edu
+dataverse_service_email: "YOUR_SERVICE_EMAIL"  # e.g., noreply@example.edu
+dataverse_system_email: "YOUR_SYSTEM_EMAIL"  # e.g., noreply@example.edu
+dataverse_adminpass: "CHANGE_ME_USE_VAULT"  # TODO: ansible-vault encrypt_string
 
 # =============================================================================
 # OPTIONAL FEATURES
 # =============================================================================
 
-dataverse_use_ssl: false  # TODO: Enable after configuring Let's Encrypt (#13)
-dataverse_use_shib: false  # TODO: Enable for SSO (#11)
+dataverse_use_ssl: false
+dataverse_use_shib: false
 dataverse_enable_telemetry: false
 
 # =============================================================================
 # DOI / PERSISTENT IDENTIFIERS
 # =============================================================================
 
-# Use DataCite test environment for staging
+# For staging: Use DataCite test environment
+# For production: Use DataCite production or EZID
 dataverse_doi_provider: datacite  # Options: datacite, ezid, fake, none
-dataverse_doi_authority: "10.80343"  # DataCite test prefix - REPLACE with UCLA's prefix
+dataverse_doi_authority: "YOUR_DOI_PREFIX"  # e.g., 10.80343 for DataCite test
 dataverse_doi_username: ""  # TODO: Add to ansible-vault
 dataverse_doi_password: ""  # TODO: Add to ansible-vault
 
@@ -58,9 +59,9 @@ dataverse_doi_password: ""  # TODO: Add to ansible-vault
 # EMAIL / SMTP
 # =============================================================================
 
-dataverse_smtp_host: smtp.ucla.edu  # VERIFY UCLA SMTP server
+dataverse_smtp_host: YOUR_SMTP_HOST  # e.g., smtp.example.edu
 dataverse_smtp_port: 587
-# TODO: Add SMTP auth if required
+# TODO: Add SMTP auth credentials if required
 
 # =============================================================================
 # APACHE CONFIGURATION
@@ -73,9 +74,9 @@ dataverse_apache_group: apache
 apache:
   enabled: true
   port: 80
-  public_fqdn: "staging.ucladataverse.dev"  # REQUIRED: Set to your domain
+  public_fqdn: "SUBDOMAIN.YOUR_DOMAIN.COM"  # REQUIRED - Same as dataverse_hostname
   ssl:
-    enabled: true  # Stage 1: false, Stage 2: true
+    enabled: false  # Stage 1: false, Stage 2: true
     port: 443
     cert: ""
     key: ""
@@ -92,10 +93,10 @@ apache:
   use_ajp: true         # Use AJP connector (recommended)
 
 letsencrypt:
-  enabled: true  # Stage 1: false, Stage 2: true
+  enabled: false  # Stage 1: false, Stage 2: true
   certbot:
     autorenew: true
-    email: "letsencrypt@ucla.edu"
+    email: "YOUR_LETSENCRYPT_EMAIL"  # e.g., letsencrypt@example.edu
     user: certbot
     test_cert: false  # Set to true for testing to avoid rate limits
 
@@ -115,18 +116,18 @@ dataverse_postgresql_user: dvnuser
 dataverse_postgresql_db: dvndb
 dataverse_postgresql_host: localhost
 dataverse_postgresql_port: 5432
-dataverse_postgresql_password: "CHANGE_ME_IN_VAULT"  # TODO: Move to ansible-vault
+dataverse_postgresql_password: "CHANGE_ME_USE_VAULT"
 dataverse_postgresql_admin_user: postgres
-dataverse_postgresql_admin_password: "CHANGE_ME_IN_VAULT"  # TODO: Move to ansible-vault
+dataverse_postgresql_admin_password: "CHANGE_ME_USE_VAULT"
 
 # PostgreSQL tuning (adjust based on EC2 instance size)
 dataverse_postgresql_log_lock_waits: true
-dataverse_postgresql_log_statements: all  # Use 'all' for staging debugging
+dataverse_postgresql_log_statements: all  # Use 'all' for staging, 'none' for prod
 dataverse_postgresql_query_counts: true
 dataverse_use_rds: false  # Set to true if using AWS RDS
 
 # PostgreSQL backups
-dataverse_postgresql_backups_enabled: true  # Enable for staging
+dataverse_postgresql_backups_enabled: true
 dataverse_postgresql_backup_rootdir: /opt/pg_backups
 dataverse_postgresql_backup_backupdir: backups
 dataverse_postgresql_backup_host: localhost
@@ -143,13 +144,14 @@ dataverse_payara_version: 5.2022.5
 dataverse_payara_domain: domain1
 dataverse_payara_listen_address: 127.0.0.1  # Localhost only - Apache proxies
 
+# =============================================================================
+# DATAVERSE NESTED CONFIGURATION
+# =============================================================================
 # NOTE: Must specify complete nested structure due to Ansible dict merging behavior
-# See group_vars/all.yml for explanation and base defaults
-# Ansible's default hash_behaviour is 'replace', not 'merge', so defining dataverse:
-# here will completely replace the dataverse dict from all.yml/defaults
+
 dataverse:
   version: '6.8'
-  adminpass: "{{ dataverse_adminpass }}"  # Reference the top-level variable
+  adminpass: "{{ dataverse_adminpass }}"
   allow_signups: true
   thumbnails: false
   srcdir: /opt/dataverse/dataverse
@@ -160,27 +162,15 @@ dataverse:
   memheap: 2048
   file_fixity_checksum_algorithm: "MD5"
   google_analytics_key:
-  copyright: "UC Regents"
+  copyright: "YOUR_COPYRIGHT_TEXT"  # e.g., "University Name"
+
   branding:
-    enabled: true
+    enabled: false  # Set to true if you have custom branding
     directory: "{{ playbook_dir }}/files/branding"
     favicons_directory: "{{ playbook_dir }}/files/favicons"
-    fileSettings:
-      - setting: HeaderCustomizationFile
-        file: custom-header.html
-      - setting: StyleCustomizationFile
-        file: custom-stylesheet.css
-      - setting: LogoCustomizationFile
-        file: dataverseUCLA_logo.png
-      - setting: HomePageCustomizationFile
-        file: custom-homepage.html
-      - setting: FooterCustomizationFile
-        file: custom-footer.html
-    otherSettings:
-      - setting: FooterCopyright
-        value: " UC Regents"
-      - setting: InstallationName
-        value: "UCLA Dataverse"
+    fileSettings: []
+    otherSettings: []
+
   language:
     enabled: true
     languages:
@@ -190,6 +180,7 @@ dataverse:
       source: https://github.com/GlobalDataverseCommunityConsortium/dataverse-language-packs.git
       version: develop
     lang_directory: "/opt/dv/lang"
+
   licenses:
     enabled: true
     user: dataverseAdmin
@@ -200,60 +191,75 @@ dataverse:
         iconUrl: https://licensebuttons.net/p/zero/1.0/88x31.png
         active: true
         sortOrder: 1
+
   frontend:
     enabled: false
+
   previewers:
     enabled: true
     on_same_server: true
     zip_url: https://github.com/gdcc/dataverse-previewers/releases/download/1.2/dataverse-previewers-1.2.zip
     dir: /var/www/html
+
   api:
     test_suite: false
     allow_lookup: true
     blocked_endpoints: "builtin-users,test"
     blocked_policy: ""
     location: "http://localhost:8080/api"
+
   jacoco:
     enabled: false
     home: /tmp/jacoco
     version: 0.8.12
+
   sampledata:
     enabled: false
     use_api: true
-    collection_name: "UCLA Data Science Center"
-    collection_alias: "ucla-dsc"
-    collection_description: "Research data from the UCLA Library Data Science Center."
-    contact_email: "datascience@library.ucla.edu"
-    affiliation: "UCLA Library"
+    collection_name: "YOUR_COLLECTION_NAME"
+    collection_alias: "YOUR_ALIAS"
+    collection_description: "YOUR_DESCRIPTION"
+    contact_email: "YOUR_CONTACT_EMAIL"
+    affiliation: "YOUR_AFFILIATION"
     dir: /tmp/sampledata
     repo: https://github.com/IQSS/dataverse-sample-data.git
     branch: master
     venv: /tmp/sampledata/venv
+
   custom_sampledata:
     enabled: false
+
   custom_metadata_blocks:
     enabled: false
+
   unittests:
     enabled: false
     argument: '-DcompilerArgument=-Xlint:unchecked test -P all-unit-tests'
+
   options:
     filepids:
     maxfileuploadsizeinbytes:
     provcollectionenabled:
     tabularingestsizelimit:
+
   default:
     config:
     storage_id: file
+
   demo: false
+
   deployment:
     upgrade_only: false
+
   filesdirs:
     - label: file
       path: /usr/local/dvn/data
+
   pid:
     authority: "10.5072"
     protocol: doi
     shoulder: "FK2/"
+
   doi:
     baseurl: "https://mds.test.datacite.org/"
     dataciterestapiurl: "https://api.test.datacite.org"
@@ -261,6 +267,7 @@ dataverse:
     provider: FAKE
     username: "testaccount"
     password: "notmypassword"
+
   externaltools:
     datacurationtool:
       enabled: false
@@ -268,15 +275,20 @@ dataverse:
       enabled: true
     wholetale:
       enabled: false
+
   root:
-    name: "UCLA Dataverse"
-    affiliation: "UCLA Library"
-    description: "UCLA Dataverse Repository"
+    name: "YOUR_ROOT_DATAVERSE_NAME"
+    affiliation: "YOUR_ORGANIZATION"
+    description: "YOUR_DESCRIPTION"
+
   harvest_clients: []
+
   handlenet:
     independenthandleservice: 'false'
+
   counter:
     enabled: false
+
   solr:
     download_url: "https://archive.apache.org/dist/solr/solr/{{ dataverse_solr_version }}/solr-{{ dataverse_solr_version }}.tgz"
     group: solr
@@ -285,15 +297,16 @@ dataverse:
     version: "{{ dataverse_solr_version }}"
     listen: 127.0.0.1
     checksum: sha256:9948dcf798c196b834c4cbb420d1ea5995479431669d266c33d46548b67e69e1
+
   payara:
     user: dataverse
     group: dataverse
     domain: domain1
     logformat: ulf
     adminuser: admin
-    adminpass: notPr0d  # Payara admin (not Dataverse admin)
-    siteurl: "https://staging.ucladataverse.dev"
-    listen_address: 127.0.0.1  # Use 127.0.0.1 for production (behind Apache proxy)
+    adminpass: notPr0d  # Payara admin password (not Dataverse admin)
+    siteurl: "https://SUBDOMAIN.YOUR_DOMAIN.COM"  # REQUIRED - Same as dataverse_siteurl
+    listen_address: 127.0.0.1
     launch_timeout: 180
     request_timeout: 1800
     root: /usr/local
@@ -310,11 +323,11 @@ dataverse_jvm_options:
   - "-XX:MaxGCPauseMillis=200"
 
 # =============================================================================
-# R / RSERVE (Optional - for statistical analysis)
+# R / RSERVE (Optional)
 # =============================================================================
 
 rserve:
-  install: false  # Set to true if needed for R-based statistical analysis
+  install: false
   host: localhost
   port: 6311
   user: rserve
@@ -323,11 +336,9 @@ rserve:
   workdir: /tmp/Rserv
 
 # =============================================================================
-# ADDITIONAL SETTINGS
+# DATABASE CONFIGURATION
 # =============================================================================
 
-# Database settings
-# NOTE: Must specify complete structure due to Ansible dict merging
 db:
   use_rds: false
   postgres:
@@ -349,30 +360,13 @@ db:
   backups:
     enabled: false
 
-# API settings
+# =============================================================================
+# API CONFIGURATION
+# =============================================================================
+
 api:
   allow_lookup: true
   blocked_endpoints: "builtin-users,test"
   blocked_policy: ""
   location: "http://localhost:8080/api"
   test_suite: false
-
-# Branding (optional)
-# dataverse:
-#   branding:
-#     enabled: true
-#     directory: "{{ playbook_dir }}/files/branding"
-#   copyright: "UC Regents"
-
-# =============================================================================
-# SECURITY NOTES
-# =============================================================================
-
-# TODO: Before deploying to staging:
-# 1. Replace all "CHANGE_ME_IN_VAULT" passwords
-# 2. Use ansible-vault to encrypt sensitive vars:
-#    ansible-vault encrypt_string 'secretpassword' --name 'dataverse_adminpass'
-# 3. Update domain names (staging-dataverse.ucla.edu)
-# 4. Configure UCLA SMTP settings
-# 5. Get DataCite/EZID credentials for DOI minting
-# 6. Review JVM heap sizes based on EC2 instance type

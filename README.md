@@ -22,18 +22,43 @@ Here follows a few key components that you should strongly consider to address b
 
 ### Enabling SSL
 
-#### Let's Encrypt and Certbot
+#### Let's Encrypt and Certbot (Recommended)
 
-In almost all cases, enabling SSL is recommended. Also, it is recommended to obtain a certificate from a CA. [Let's Encrypt](https://letsencrypt.org) provides
-free certificates that can be automatically obtained and renewed using for instance [Certbot](https://certbot.eff.org).
+For remote AWS deployments, we recommend [Let's Encrypt](https://letsencrypt.org) with [Certbot](https://certbot.eff.org) for free, automated SSL certificates.
 
-Certbot also makes it possible to automatically update the web server so that the certificates are used and that all traffic is forced over `https`.
+**Two-stage deployment process:**
 
-To utilize Certbot with Let's Encrypt certificates you need to set the following parameters in `defaults/main.yml`:
+**Stage 1 - Deploy with HTTP:**
+```yaml
+# In group_vars/your_environment.yml
+apache:
+  ssl:
+    enabled: false
+letsencrypt:
+  enabled: false
+```
+Run: `ansible-playbook -i inventory/your_environment.yml site.yml`
 
-- `letsencrypt.enabled: true`
-- `certbot.email: myname@mydomain`
-- `apache.ssl.enabled: true`
+**Stage 2 - Enable HTTPS:**
+```yaml
+# In group_vars/your_environment.yml
+apache:
+  ssl:
+    enabled: true
+letsencrypt:
+  enabled: true
+  certbot:
+    email: your-email@domain.com
+```
+Run: `ansible-playbook -i inventory/your_environment.yml site.yml` (again)
+
+Certbot will automatically:
+- Obtain SSL certificate from Let's Encrypt
+- Configure Apache VirtualHost for HTTPS
+- Set up HTTP→HTTPS redirect
+- Enable automatic certificate renewal
+
+**See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for complete step-by-step instructions.**
 
 #### Other certificates
 If you need to set particular certificates, for instance if your organization already has prepared this for you we need to modify the following parameters:

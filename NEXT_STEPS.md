@@ -1,10 +1,10 @@
 # Next Steps for Dataverse Ansible Development
 
-**Last Updated**: 2025-11-24
+**Last Updated**: 2025-12-01
 
 ## Current Status
 
-### ✅ Completed (November 2025)
+### ✅ Completed (November-December 2025)
 
 #### 1. **Local Development & Testing Infrastructure**
 - [x] Molecule rocky9 scenario fully working
@@ -46,14 +46,44 @@
 - [x] Troubleshooting guide (TROUBLESHOOTING.md)
 - [x] Molecule quick reference (MOLECULE_QUICK_REF.md)
 - [x] Fork improvements log (FORK_IMPROVEMENTS.md)
+- [x] Comprehensive deployment guide (DEPLOYMENT_GUIDE.md) - 2025-12-01
+- [x] Environment template (group_vars/TEMPLATE.yml) - 2025-12-01
+- [x] SSL refactoring notes (REFACTORING_NOTES.md) - 2025-12-01
+
+#### 6. **Staging Environment Deployment** 🚀
+**Completed:** 2025-12-01
+- [x] Terraform infrastructure provisioned (terraform-dataverse/)
+- [x] EC2 instance (t3.large, Rocky Linux 9, Elastic IP: 44.230.113.91)
+- [x] Ansible inventory configured (inventory/staging.yml)
+- [x] DNS configured (staging.ucladataverse.dev → A record)
+- [x] Dataverse 6.8 deployed successfully
+- [x] Let's Encrypt SSL certificate obtained and configured
+- [x] HTTPS with automatic HTTP→HTTPS redirect
+- [x] Certbot auto-renewal enabled (certbot-renew.timer)
+- [x] UCLA branding validated on staging
+- [x] All services operational (Apache, Payara 6, PostgreSQL 16, Solr 9.8)
+
+**Environment Details:**
+- **URL:** https://staging.ucladataverse.dev
+- **IP:** 44.230.113.91
+- **Domain:** ucladataverse.dev (Squarespace DNS)
+- **SSL:** Let's Encrypt (valid certificate)
+- **Deployment Method:** Two-stage (HTTP first, then HTTPS)
+
+**Key Improvements from Staging Deployment:**
+- Fixed Rocky Linux 9 psycopg2 installation issues
+- Resolved Ansible dictionary merging problems
+- Improved AWS metadata service detection
+- Refactored Let's Encrypt integration for simplicity
+- Created reusable deployment templates
 
 ---
 
-## 🎯 Immediate Next Steps (Pre-Deployment)
+## 🎯 Immediate Next Steps (Production Deployment)
 
-### Phase 1: Information Gathering (This Week)
+### Phase 1: Information Gathering ✅ **PARTIALLY COMPLETE**
 
-Before starting AWS deployment, collect this information:
+Staging deployment complete! For production deployment, collect this information:
 
 - [ ] **Production 5.14 Instance Details**
   - [ ] Current Dataverse version
@@ -63,37 +93,41 @@ Before starting AWS deployment, collect this information:
   - [ ] Current DOI authority and provider
   - [ ] Current resource usage (CPU, memory, disk)
 
-- [ ] **AWS Resources**
-  - [ ] EC2 instance type decision (match or exceed current)
-  - [ ] Storage requirements (2x current for safety)
-  - [ ] Elastic IP allocated
-  - [ ] Security groups configured
+- [x] **AWS Resources** ✅ (Staging complete)
+  - [x] EC2 instance type decision (t3.large for staging)
+  - [x] Storage requirements (80GB root volume)
+  - [x] Elastic IP allocated (44.230.113.91)
+  - [x] Security groups configured (SSH, HTTP, HTTPS)
 
 - [ ] **Credentials**
   - [ ] UCLA DOI credentials (production + test)
   - [ ] SMTP relay information
   - [ ] SSH key pair for EC2
 
-- [ ] **DNS Strategy**
-  - [ ] test.dataverse.ucla.edu access (for Phase 2)
-  - [ ] OR budget for cheap test domain (~$12)
+- [x] **DNS Strategy** ✅ (Staging complete)
+  - [x] Acquired ucladataverse.dev domain (Squarespace)
+  - [x] Configured staging.ucladataverse.dev A record
+  - [ ] Plan production subdomain (prod.ucladataverse.dev or dataverse.ucla.edu)
 
 **Action:** Review [MIGRATION_5.14_TO_6.8.md](MIGRATION_5.14_TO_6.8.md) Pre-Migration Planning section
 
-### Phase 2: Deploy Test Instance (Week 1)
+### Phase 2: Deploy Test Instance ✅ **COMPLETED** (2025-12-01)
 
-- [ ] Launch EC2 instance (Rocky Linux 9)
-- [ ] Deploy fresh 6.8 via Ansible
-- [ ] Test on Elastic IP (http://54.x.x.x)
-- [ ] Validate UCLA branding
-- [ ] Document any issues
+- [x] Launch EC2 instance (Rocky Linux 9) ✅
+- [x] Deploy fresh 6.8 via Ansible ✅
+- [x] Test on Elastic IP (http://44.230.113.91) ✅
+- [x] Configure SSL with Let's Encrypt ✅
+- [x] Validate UCLA branding ✅
+- [x] Document issues → See REFACTORING_NOTES.md ✅
 
-**Action:** Follow [MIGRATION_5.14_TO_6.8.md](MIGRATION_5.14_TO_6.8.md) Phase 1
+**Status:** Staging environment fully operational at https://staging.ucladataverse.dev
 
-### Phase 3: Integration Testing (Week 2-3)
+**Action:** Follow [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for colleague deployments
 
-- [ ] Configure SSL with domain
-- [ ] Clone production database
+### Phase 3: Integration Testing (In Progress)
+
+- [x] Configure SSL with domain ✅ (Let's Encrypt working)
+- [ ] Clone production database (requires access to prod instance)
 - [ ] Test 5.14 → 6.8 schema upgrade
 - [ ] Sync production files
 - [ ] DOI testing with test authority
@@ -101,6 +135,7 @@ Before starting AWS deployment, collect this information:
 - [ ] Backup/restore validation
 
 **Action:** Follow [MIGRATION_5.14_TO_6.8.md](MIGRATION_5.14_TO_6.8.md) Phase 2
+**Next:** Requires production database access
 
 ### Phase 4: Production Cutover (Week 4)
 
