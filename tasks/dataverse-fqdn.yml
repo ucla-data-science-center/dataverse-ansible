@@ -49,7 +49,7 @@
   failed_when: False
 
 - set_fact:
-    is_aws_environment: "{{ aws_uri_check.status == 200 }}"
+    is_aws_environment: "{{ aws_uri_check.status | default(0) == 200 }}"
 
 - name: if we're in EC2 and no public_fqdn, get public hostname
   ansible.builtin.uri:
@@ -61,7 +61,7 @@
 
 - name: but some EC2 instances have no public hostname
   ansible.builtin.set_fact:
-    is_public_hostname: "{{ ec2_hostname_output.status == 200 }}"
+    is_public_hostname: "{{ ec2_hostname_output.status | default(0) == 200 }}"
   when: is_aws_environment
         and custom_fqdn is undefined
 

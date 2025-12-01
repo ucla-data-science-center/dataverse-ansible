@@ -9,6 +9,8 @@
   package:
     name: python3-psycopg2
     state: latest
+  when: not (ansible_os_family == "RedHat" and ansible_distribution_major_version == "9")
+  # Note: On Rocky 9, psycopg2 is installed via pip in dataverse-prereqs.yml
 
 - name: postgres uses differing version syntax in a few commands/packages
   set_fact:

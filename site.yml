@@ -41,6 +41,12 @@
         success_msg: "All required variables are configured."
       tags: always
 
+    - name: Ensure python3-pip is installed (for psycopg2)
+      package:
+        name: python3-pip
+        state: present
+      when: ansible_os_family == "RedHat"
+
   tasks:
     - name: Include dataverse role tasks
       ansible.builtin.include_role:

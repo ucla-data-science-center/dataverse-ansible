@@ -34,9 +34,17 @@
 
 - name: install some necessary packages
   ansible.builtin.package:
-    name: ['bash-completion', 'bc', 'ed', 'git', 'jq', 'mlocate', 'net-tools', 'sudo', 'unzip', 'python3-psycopg2', 'zip', 'tar', 'wget']
+    name: ['bash-completion', 'bc', 'ed', 'git', 'jq', 'mlocate', 'net-tools', 'sudo', 'unzip', 'zip', 'tar', 'wget']
     state: latest
   when: ansible_os_family == "RedHat"
+
+# Install python3-psycopg2 package on RHEL 8 and earlier (available in repos)
+- name: install python3-psycopg2 from package manager (RHEL 8 and earlier)
+  ansible.builtin.package:
+    name: python3-psycopg2
+    state: latest
+  when: ansible_os_family == "RedHat" and
+        ansible_distribution_major_version|int < 9
 
 # Ensure pip is installed for Python 3.9
 - name: Ensure pip is installed for Python 3.9
@@ -46,17 +54,12 @@
   when: ansible_os_family == "RedHat" and
         ansible_distribution_major_version == "9"
 
-# Find the path to pip3 for Rocky 9
-- name: Find path to pip3
-  command: "which pip3"
-  register: pip_path
-
 # Install psycopg2 via pip for Rocky 9 if not available via package manager
+# Use python3 -m pip instead of pip3 executable to ensure it's found
 - name: Install psycopg2 via pip
-  pip:
-    name: psycopg2-binary
-    state: latest
-    executable: "{{ pip_path.stdout }}"
+  command: python3 -m pip install psycopg2-binary
+  args:
+    creates: /usr/local/lib64/python3.9/site-packages/psycopg2
   when: ansible_os_family == "RedHat" and
         ansible_distribution_major_version == "9"
 
@@ -75,7 +78,7 @@
   when:
     - ansible_os_family == "RedHat"
     - ansible_distribution_major_version in ["8", "9"]
-    - dataverse.thumbnails
+    - dataverse.thumbnails | default(false)
 
 # Ensure the Payara service account exists
 - name: Payara service account must exist

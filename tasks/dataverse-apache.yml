@@ -22,7 +22,7 @@
   when: ansible_os_family == "Debian"
 
 - name: install Apache for RedHat/Rocky
-  yum:
+  ansible.builtin.package:
     name: ['httpd', 'mod_ssl']
     state: latest
   when: ansible_os_family == "RedHat"
@@ -60,6 +60,12 @@
     state: absent
   when: ansible_os_family == "Debian"
   notify: enable and restart apache
+
+- name: ensure httpd package is installed before configuration
+  ansible.builtin.package:
+    name: httpd
+    state: present
+  when: ansible_os_family == "RedHat"
 
 - name: reconfigure Listen directive on RedHat
   lineinfile:
