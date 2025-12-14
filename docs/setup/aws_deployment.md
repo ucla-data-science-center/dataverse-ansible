@@ -313,7 +313,7 @@ For issues or questions:
 # Appendix: Deployment Checklist
 # AWS Deployment Checklist
 
-Quick reference checklist for deploying UCLA Dataverse to AWS. See [AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md) for detailed instructions.
+Quick reference checklist for deploying UCLA Dataverse to AWS. See [AWS Deployment Guide](aws_deployment.md) for detailed instructions.
 
 ---
 
@@ -567,7 +567,7 @@ ansible all -i inventory/production.yml -a "dnf update -y"
 ## Support
 
 - **Documentation:** See [AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md)
-- **Troubleshooting:** See [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+- **Troubleshooting:** See [Troubleshooting Guide](../operations/troubleshooting.md)
 - **GitHub Issues:** https://github.com/ucla-data-science-center/dataverse-ansible/issues
 - **Dataverse Guides:** https://guides.dataverse.org/
 - **Team Slack:** #dataverse channel
