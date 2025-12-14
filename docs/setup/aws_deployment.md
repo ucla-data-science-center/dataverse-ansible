@@ -49,7 +49,29 @@ terraform apply
 
 **Note the Elastic IP** from the output - you'll need this for DNS configuration.
 
-### 1.3 Configure DNS
+### 1.3 Capture Terraform Outputs
+
+After `terraform apply` finishes, you will see outputs like:
+
+```hcl
+Outputs:
+
+ansible_inventory_path = "./inventory-staging.yml"
+dataverse_alerts_sns_topic_arn = "arn:aws:sns:us-west-2:123456789012:dataverse-alerts-staging"
+instance_public_dns = "ec2-54-123-45-67.us-west-2.compute.amazonaws.com"
+instance_public_ip = "54.123.45.67"
+```
+
+**Required Actions:**
+1.  **Copy `instance_public_ip`**: You will use this in your Ansible inventory (`ansible_host`).
+2.  **Copy `dataverse_alerts_sns_topic_arn`**: If configuring CloudWatch, put this in `group_vars`.
+
+> **⚠️ Team Collaboration Note (Terraform State):**
+> Terraform stores the state of your infrastructure in a local file named `terraform.tfstate`.
+> *   **Do NOT commit this file to Git** (it contains secrets).
+> *   **If collaborating:** You must share this file securely or migrate to a remote backend (like AWS S3) so everyone sees the same infrastructure state. Otherwise, running Terraform from another machine might destroy/recreate resources.
+
+### 1.4 Configure DNS
 
 In your DNS provider (e.g., Squarespace, Route53, Cloudflare):
 
