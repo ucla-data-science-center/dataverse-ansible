@@ -1,4 +1,4 @@
-{% if apache.ssl.enabled %}
+{% if use_ssl_in_template %}
 <IfModule ssl_module>
   {% if ansible_os_family == "RedHat" %}
 Listen {{ apache.ssl.port }} https
@@ -28,7 +28,7 @@ Listen {{ apache.ssl.port }} https
   ServerName {{ servername }}
 {% endif %}
 
-{% if apache.ssl.enabled %}
+{% if use_ssl_in_template %}
     <IfModule ssl_module>
   {% if ansible_os_family == "RedHat" %}
       ErrorLog logs/ssl_error_log

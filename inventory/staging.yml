@@ -12,8 +12,8 @@ all:
     staging:
       hosts:
         dataverse-staging:
-          # EC2 instance connection details
-          ansible_host: 44.230.113.91
+          # EC2 instance connection details (Rocky Linux 9.4)
+          ansible_host: 52.24.202.10
           ansible_user: rocky
           ansible_ssh_private_key_file: ~/.ssh/dataverse-ansible
 

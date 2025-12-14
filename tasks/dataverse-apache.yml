@@ -45,6 +45,16 @@
   when: ansible_os_family == "Debian"    ## CHECKME -- does this need to be Debian-specific?
   notify: enable and restart apache
 
+- name: Check if Let's Encrypt certificate exists
+  stat:
+    path: "/etc/letsencrypt/live/{{ apache.public_fqdn }}/cert.pem"
+  register: letsencrypt_cert_check
+  when: letsencrypt.enabled
+
+- name: Determine if SSL config should be rendered (Bootstrap Logic)
+  set_fact:
+    use_ssl_in_template: "{{ apache.ssl.enabled and (not letsencrypt.enabled or letsencrypt_cert_check.stat.exists) }}"
+
 - name: install unified http proxy config
   template:
     src: http.proxy.conf.j2
@@ -130,3 +140,25 @@
 
 - name: run handlers -- this runs the apache restart scripts
   meta: flush_handlers
+
+- name: Re-check if Let's Encrypt certificate exists (Post-Certbot)
+  stat:
+    path: "/etc/letsencrypt/live/{{ apache.public_fqdn }}/cert.pem"
+  register: letsencrypt_cert_check_post
+  when: letsencrypt.enabled
+
+- name: Re-render unified http proxy config with SSL (Post-Certbot)
+  template:
+    src: http.proxy.conf.j2
+    dest: "{{ apache_virtualhost_dir }}/http.proxy.conf"
+    owner: root
+    group: root
+    mode: '0644'
+  vars:
+    use_ssl_in_template: true
+  notify: enable and restart apache
+  when: 
+    - apache.ssl.enabled 
+    - letsencrypt.enabled
+    - letsencrypt_cert_check_post.stat.exists
+    - not use_ssl_in_template
