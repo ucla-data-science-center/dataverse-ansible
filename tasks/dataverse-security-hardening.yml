@@ -1,0 +1,72 @@
+---
+- name: configure password complexity
+  debug:
+    msg: "Configuring password complexity..."
+
+- name: set password validation regex
+  uri:
+    url: "http://localhost:8080/api/admin/settings/:PVMinLength"
+    method: PUT
+    body: "{{ dataverse.security.password.min_length }}"
+    status_code: 200
+  when: dataverse.security.password.min_length is defined
+
+- name: set password character rules
+  uri:
+    url: "http://localhost:8080/api/admin/settings/:PVCharacterRules"
+    method: PUT
+    body: "{{ dataverse.security.password.character_rules }}"
+    status_code: 200
+  when: dataverse.security.password.character_rules is defined
+
+- name: set number of characteristics required
+  uri:
+    url: "http://localhost:8080/api/admin/settings/:PVNumberOfCharacteristics"
+    method: PUT
+    body: "{{ dataverse.security.password.number_of_characteristics }}"
+    status_code: 200
+  when: dataverse.security.password.number_of_characteristics is defined
+
+- name: set password dictionary check
+  uri:
+    url: "http://localhost:8080/api/admin/settings/:PVDictionaries"
+    method: PUT
+    body: "{{ dataverse.security.password.dictionaries }}"
+    status_code: 200
+  when: dataverse.security.password.dictionaries is defined
+
+# JVM Options for API Blocking (Requires Idempotency Check)
+- name: Check if blocked endpoints JVM option exists
+  shell: "{{ payara_dir }}/bin/asadmin list-jvm-options | grep -q 'Ddataverse.api.blocked.endpoints'"
+  register: has_blocked_endpoints
+  failed_when: false
+  changed_when: false
+
+- name: set blocked api endpoints (JVM)
+  shell: "{{ payara_dir }}/bin/asadmin create-jvm-options '-Ddataverse.api.blocked.endpoints={{ dataverse.security.blocked_endpoints }}'"
+  when: 
+    - dataverse.security.blocked_endpoints is defined 
+    - has_blocked_endpoints.rc != 0
+  notify: enable and restart payara
+
+- name: Check if blocked policy JVM option exists
+  shell: "{{ payara_dir }}/bin/asadmin list-jvm-options | grep -q 'Ddataverse.api.blocked.policy'"
+  register: has_blocked_policy
+  failed_when: false
+  changed_when: false
+
+- name: set blocked api policy (JVM)
+  shell: "{{ payara_dir }}/bin/asadmin create-jvm-options '-Ddataverse.api.blocked.policy={{ dataverse.security.blocked_policy }}'"
+  when: 
+    - dataverse.security.blocked_policy is defined
+    - has_blocked_policy.rc != 0
+  notify: enable and restart payara
+
+# Session Timeout
+- name: set session timeout
+  uri:
+    url: "http://localhost:8080/api/admin/settings/:LoginSessionTimeout"
+    method: PUT
+    body: "{{ dataverse.security.session_timeout }}"
+    status_code: 200
+  when: dataverse.security.session_timeout is defined

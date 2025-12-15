@@ -162,3 +162,22 @@
     - letsencrypt.enabled
     - letsencrypt_cert_check_post.stat.exists
     - not use_ssl_in_template
+
+- name: Remove Certbot generated SSL config (conflicts with Ansible managed config)
+  file:
+    path: "{{ apache_virtualhost_dir }}/http.proxy-le-ssl.conf"
+    state: absent
+  when: letsencrypt.enabled
+  notify: enable and restart apache
+
+- name: disable default ssl.conf to avoid Listen 443 conflict
+  file:
+    path: "{{ apache_config_base_dir }}/conf.d/ssl.conf"
+    state: absent
+  when: ansible_os_family == "RedHat"
+  notify: enable and restart apache
+
+- name: Clean up duplicate Listen 80 block in httpd.conf
+  shell: "sed -i '/<IfModule mod_ssl.c>/,/<\\/IfModule>/d' {{ apache_config_base_dir }}/conf/httpd.conf"
+  when: ansible_os_family == "RedHat"
+  notify: enable and restart apache

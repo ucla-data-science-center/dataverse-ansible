@@ -152,9 +152,11 @@ Listen {{ apache.ssl.port }} https
 {% if apache.use_ajp %}
   # pass everything else to Glassfish
   ProxyPass / ajp://localhost:8009/
+  ProxyPassReverse / ajp://localhost:8009/
 {% else %}
   # pass everything else to Glassfish
   ProxyPass / http://localhost:8080/
+  ProxyPassReverse / http://localhost:8080/
 {% endif %}
 
 
