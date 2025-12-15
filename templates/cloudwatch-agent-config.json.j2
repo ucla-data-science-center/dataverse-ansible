@@ -1,0 +1,60 @@
+{
+  "agent": {
+    "metrics_collection_interval": {{ cloudwatch.metrics_collection_interval }},
+    "run_as_user": "root"
+  },
+  "metrics": {
+    "metrics_collected": {
+      "cpu": {
+        "resources": [
+          "*"
+        ],
+        "measurement": [
+          "cpu_usage_idle",
+          "cpu_usage_iowait",
+          "cpu_usage_user",
+          "cpu_usage_system"
+        ],
+        "totalcpu": true
+      },
+      "disk": {
+        "resources": [
+          "/"
+        ],
+        "measurement": [
+          "disk_used_percent",
+          "disk_inodes_free"
+        ],
+        "ignore_file_system_types": [
+          "tmpfs", "devtmpfs"
+        ]
+      },
+      "mem": {
+        "measurement": [
+          "mem_used_percent"
+        ]
+      }
+    },
+    "append_dimensions": {
+      "InstanceId": "${aws:InstanceId}"
+    }
+  },
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {% for log in cloudwatch.logs %}
+          {
+            "file_path": "{{ log.file_path }}",
+            "log_group_name": "{{ log.log_group_name }}",
+            "log_stream_name": "{{ log.log_stream_name }}",
+            "timestamp_format": "{{ log.timestamp_format }}"
+          }{% if not loop.last %},{% endif %}
+          {% endfor %}
+        ]
+      }
+    },
+    "log_stream_name": "general",
+    "force_flush_interval": 5
+  }
+}

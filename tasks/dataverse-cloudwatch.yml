@@ -1,0 +1,42 @@
+---
+- name: Install CloudWatch Agent
+  debug:
+    msg: "Installing CloudWatch Agent..."
+
+- name: ensure cloudwatch directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - /opt/aws/amazon-cloudwatch-agent
+    - /opt/aws/amazon-cloudwatch-agent/bin
+    - /opt/aws/amazon-cloudwatch-agent/etc
+
+- name: download cloudwatch agent
+  get_url:
+    url: "https://s3.amazonaws.com/amazoncloudwatch-agent/{{ ansible_distribution }}/{{ ansible_architecture }}/latest/amazon-cloudwatch-agent.rpm"
+    dest: /tmp/amazon-cloudwatch-agent.rpm
+    # For idempotency, you might want to add a checksum or check if installed
+
+- name: install cloudwatch agent
+  yum:
+    name: /tmp/amazon-cloudwatch-agent.rpm
+    state: present
+
+- name: copy cloudwatch agent config template
+  template:
+    src: cloudwatch-agent-config.json.j2
+    dest: /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart cloudwatch agent
+
+- name: start cloudwatch agent
+  service:
+    name: amazon-cloudwatch-agent
+    state: started
+    enabled: true

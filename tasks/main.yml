@@ -129,6 +129,12 @@
   - smtp
   - ratelimiting
 
+- ansible.builtin.import_tasks: dataverse-cloudwatch.yml
+  when: cloudwatch.enabled | default(false)
+  tags:
+  - cloudwatch
+  - monitoring
+
 - ansible.builtin.import_tasks: dataverse-frontend.yml
   tags:
   - frontend
