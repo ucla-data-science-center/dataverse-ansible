@@ -116,6 +116,19 @@
   tags:
   - postinstall
 
+- ansible.builtin.import_tasks: dataverse-security-hardening.yml
+  when: dataverse_security is defined
+  tags:
+  - postinstall
+  - security
+
+- ansible.builtin.import_tasks: dataverse-smtp-ratelimiting.yml
+  when: (dataverse_smtp is defined and dataverse_smtp.enabled) or (dataverse_rate_limiting is defined and dataverse_rate_limiting.enabled)
+  tags:
+  - postinstall
+  - smtp
+  - ratelimiting
+
 - ansible.builtin.import_tasks: dataverse-frontend.yml
   tags:
   - frontend

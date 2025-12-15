@@ -1,0 +1,91 @@
+---
+# SMTP Configuration via JVM Options
+# Uses 'failed_when' pattern to handle idempotency (ignores 'already exists' errors)
+
+- name: configure smtp settings
+  block:
+    - name: set system email
+      shell: "{{ payara_dir }}/bin/asadmin create-jvm-options '-Ddataverse.mail.system-email={{ dataverse_smtp.system_email }}'"
+      register: result
+      failed_when: "'already exists' not in result.stderr and result.rc != 0"
+      changed_when: result.rc == 0
+      when: dataverse_smtp.system_email is defined
+      notify: enable and restart payara
+
+    - name: set support email
+      shell: "{{ payara_dir }}/bin/asadmin create-jvm-options '-Ddataverse.mail.support-email={{ dataverse_smtp.support_email }}'"
+      register: result
+      failed_when: "'already exists' not in result.stderr and result.rc != 0"
+      changed_when: result.rc == 0
+      when: dataverse_smtp.support_email is defined
+      notify: enable and restart payara
+
+    - name: set smtp host
+      shell: "{{ payara_dir }}/bin/asadmin create-jvm-options '-Ddataverse.mail.mta.host={{ dataverse_smtp.host }}'"
+      register: result
+      failed_when: "'already exists' not in result.stderr and result.rc != 0"
+      changed_when: result.rc == 0
+      when: dataverse_smtp.host is defined
+      notify: enable and restart payara
+
+    - name: set smtp port
+      shell: "{{ payara_dir }}/bin/asadmin create-jvm-options '-Ddataverse.mail.mta.port={{ dataverse_smtp.port }}'"
+      register: result
+      failed_when: "'already exists' not in result.stderr and result.rc != 0"
+      changed_when: result.rc == 0
+      when: dataverse_smtp.port is defined
+      notify: enable and restart payara
+
+    - name: set smtp auth
+      shell: "{{ payara_dir }}/bin/asadmin create-jvm-options '-Ddataverse.mail.mta.auth={{ dataverse_smtp.auth | lower }}'"
+      register: result
+      failed_when: "'already exists' not in result.stderr and result.rc != 0"
+      changed_when: result.rc == 0
+      when: dataverse_smtp.auth is defined
+      notify: enable and restart payara
+
+    - name: set smtp starttls
+      shell: "{{ payara_dir }}/bin/asadmin create-jvm-options '-Ddataverse.mail.mta.starttls.enable={{ dataverse_smtp.starttls | lower }}'"
+      register: result
+      failed_when: "'already exists' not in result.stderr and result.rc != 0"
+      changed_when: result.rc == 0
+      when: dataverse_smtp.starttls is defined
+      notify: enable and restart payara
+
+  when: dataverse_smtp is defined and dataverse_smtp.enabled
+
+# Rate Limiting Configuration via API
+
+- name: configure rate limiting
+  block:
+    - name: get admin api token
+      shell: "sudo -u postgres psql -d dvndb -t -c \"SELECT tokenstring FROM apitoken, authenticateduser WHERE apitoken.authenticateduser_id = authenticateduser.id AND authenticateduser.useridentifier = 'dataverseAdmin';\""
+      register: admin_api_token
+      changed_when: false
+
+    # 1. Default Tiers (via settings API)
+    - name: set default capacity tiers (via settings API)
+      uri:
+        url: "http://localhost:8080/api/admin/settings/:RateLimitingDefaultCapacityTiers"
+        method: PUT
+        headers:
+          X-Dataverse-key: "{{ admin_api_token.stdout | trim }}"
+        body: "{{ dataverse_rate_limiting.default_capacity_tiers }}" # Pass the comma-separated string directly
+        status_code: 200
+      when: dataverse_rate_limiting.default_capacity_tiers is defined
+
+    # 2. Action-Specific Limits (DISABLED - requires API guide check)
+    # The endpoint 'api/admin/requestLimit/capacity/{actions}/{tier}' is likely outdated.
+    # Commenting out until correct API endpoint for action-specific limits can be confirmed.
+    # - name: set action-specific limits (optimized loop)
+    #   uri:
+    #     url: "http://localhost:8080/api/admin/requestLimit/capacity/{{ item.actions | join(',') }}/{{ item.tier }}"
+    #     method: PUT
+    #     headers:
+    #       X-Dataverse-key: "{{ admin_api_token.stdout | trim }}"
+    #     body: "{{ item.limitPerHour }}"
+    #     status_code: 200
+    #   loop: "{{ dataverse_rate_limiting.capacity_by_tier_and_action }}"
+    #   when: dataverse_rate_limiting.capacity_by_tier_and_action is defined
+
+  when: dataverse_rate_limiting is defined and dataverse_rate_limiting.enabled

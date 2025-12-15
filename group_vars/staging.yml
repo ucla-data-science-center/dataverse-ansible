@@ -365,14 +365,47 @@ api:
 #   copyright: "UC Regents"
 
 # =============================================================================
-# SECURITY NOTES
+# SECURITY HARDENING
 # =============================================================================
+dataverse_security:
+  blocked_endpoints: "admin,builtin-users,test,sword"
+  blocked_policy: "localhost-only"
+  exclude_email_from_export: true
+  password:
+    min_length: 12
+    max_length: 128
+    consecutive_digits_allowed: 2
+    character_rules: "UpperCase:1,LowerCase:1,Digit:1,Special:1"
+    number_of_characteristics: 3
+    dictionaries: "common-passwords"
+    good_strength: 20
+  ip_source_header: "X-Forwarded-For"
+  session_timeout: 480
+  allow_custom_terms: false
+  samesite_cookie: "Lax"
 
-# TODO: Before deploying to staging:
-# 1. Replace all "CHANGE_ME_IN_VAULT" passwords
-# 2. Use ansible-vault to encrypt sensitive vars:
-#    ansible-vault encrypt_string 'secretpassword' --name 'dataverse_adminpass'
-# 3. Update domain names (staging-dataverse.ucla.edu)
-# 4. Configure UCLA SMTP settings
-# 5. Get DataCite/EZID credentials for DOI minting
-# 6. Review JVM heap sizes based on EC2 instance type
+# =============================================================================
+# SMTP & RATE LIMITING
+# =============================================================================
+dataverse_smtp:
+  enabled: true
+  host: "smtp.ucla.edu"
+  port: 587
+  system_email: "noreply-dataverse@ucla.edu"
+  support_email: "dataverse-support@ucla.edu"
+  auth: false
+  starttls: true
+
+dataverse_rate_limiting:
+  enabled: true
+  default_capacity_tiers: "10000,20000"
+  capacity_by_tier_and_action:
+    - tier: 0
+      limitPerHour: 100
+      actions:
+        - "GetLatestPublishedDatasetVersionCommand"
+        - "GetPrivateUrlCommand"
+    - tier: 1
+      limitPerHour: 1000
+      actions:
+        - "GetLatestPublishedDatasetVersionCommand"
