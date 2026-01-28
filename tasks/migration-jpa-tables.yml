@@ -1,0 +1,213 @@
+---
+# dataverse-ansible/tasks/migration-jpa-tables.yml
+#
+# Creates missing JPA tables required for Dataverse 5.x to 6.x migration.
+# These tables are normally created by JPA but may be missing if the database
+# schema was never properly initialized with intermediate versions.
+#
+# Usage: Set migration.create_jpa_tables: true in group_vars to enable
+#
+# Run AFTER database restore but BEFORE starting Payara.
+
+- name: Begin migration JPA tables task
+  ansible.builtin.debug:
+    msg: '##### MIGRATION: Creating missing JPA tables for 5.x to 6.x upgrade #####'
+
+- name: Check if storageuse table exists
+  community.postgresql.postgresql_query:
+    login_host: '{{ db.postgres.host | default("localhost") }}'
+    login_port: '{{ db.postgres.port | default(5432) }}'
+    login_user: '{{ db.postgres.user }}'
+    login_password: '{{ db.postgres.pass }}'
+    db: '{{ db.postgres.name }}'
+    query: >
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'storageuse'
+      ) as table_exists;
+  register: storageuse_check
+
+- name: Create storageuse table (required for V6.0.0.5)
+  community.postgresql.postgresql_query:
+    login_host: '{{ db.postgres.host | default("localhost") }}'
+    login_port: '{{ db.postgres.port | default(5432) }}'
+    login_user: '{{ db.postgres.user }}'
+    login_password: '{{ db.postgres.pass }}'
+    db: '{{ db.postgres.name }}'
+    query: |
+      CREATE TABLE storageuse (
+          id SERIAL PRIMARY KEY,
+          dvobjectcontainer_id BIGINT NOT NULL UNIQUE REFERENCES dvobject(id),
+          sizeinbytes BIGINT
+      );
+      CREATE INDEX idx_storageuse_dvobjectcontainer ON storageuse(dvobjectcontainer_id);
+  when: not storageuse_check.query_result[0].table_exists
+
+- name: Check if datasettype table exists
+  community.postgresql.postgresql_query:
+    login_host: '{{ db.postgres.host | default("localhost") }}'
+    login_port: '{{ db.postgres.port | default(5432) }}'
+    login_user: '{{ db.postgres.user }}'
+    login_password: '{{ db.postgres.pass }}'
+    db: '{{ db.postgres.name }}'
+    query: >
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'datasettype'
+      ) as table_exists;
+  register: datasettype_check
+
+- name: Create datasettype table (required for V6.3.0.3)
+  community.postgresql.postgresql_query:
+    login_host: '{{ db.postgres.host | default("localhost") }}'
+    login_port: '{{ db.postgres.port | default(5432) }}'
+    login_user: '{{ db.postgres.user }}'
+    login_password: '{{ db.postgres.pass }}'
+    db: '{{ db.postgres.name }}'
+    query: |
+      CREATE TABLE datasettype (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(255) NOT NULL UNIQUE
+      );
+  when: not datasettype_check.query_result[0].table_exists
+
+- name: Check if makedatacountprocessstate table exists
+  community.postgresql.postgresql_query:
+    login_host: '{{ db.postgres.host | default("localhost") }}'
+    login_port: '{{ db.postgres.port | default(5432) }}'
+    login_user: '{{ db.postgres.user }}'
+    login_password: '{{ db.postgres.pass }}'
+    db: '{{ db.postgres.name }}'
+    query: >
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'makedatacountprocessstate'
+      ) as table_exists;
+  register: mdc_check
+
+- name: Create makedatacountprocessstate table (required for V6.5.0.10)
+  community.postgresql.postgresql_query:
+    login_host: '{{ db.postgres.host | default("localhost") }}'
+    login_port: '{{ db.postgres.port | default(5432) }}'
+    login_user: '{{ db.postgres.user }}'
+    login_password: '{{ db.postgres.pass }}'
+    db: '{{ db.postgres.name }}'
+    query: |
+      CREATE TABLE makedatacountprocessstate (
+          id SERIAL PRIMARY KEY,
+          yearmonth VARCHAR(255) NOT NULL,
+          state INTEGER NOT NULL,
+          statechangetimestamp TIMESTAMP
+      );
+      CREATE INDEX idx_makedatacountprocessstate_yearmonth ON makedatacountprocessstate(yearmonth);
+  when: not mdc_check.query_result[0].table_exists
+
+- name: Check if dataversefeatureditem table exists
+  community.postgresql.postgresql_query:
+    login_host: '{{ db.postgres.host | default("localhost") }}'
+    login_port: '{{ db.postgres.port | default(5432) }}'
+    login_user: '{{ db.postgres.user }}'
+    login_password: '{{ db.postgres.pass }}'
+    db: '{{ db.postgres.name }}'
+    query: >
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'dataversefeatureditem'
+      ) as table_exists;
+  register: featureditem_check
+
+- name: Create dataversefeatureditem table (required for V6.6.0.2)
+  community.postgresql.postgresql_query:
+    login_host: '{{ db.postgres.host | default("localhost") }}'
+    login_port: '{{ db.postgres.port | default(5432) }}'
+    login_user: '{{ db.postgres.user }}'
+    login_password: '{{ db.postgres.pass }}'
+    db: '{{ db.postgres.name }}'
+    query: |
+      CREATE TABLE dataversefeatureditem (
+          id SERIAL PRIMARY KEY,
+          dataverse_id BIGINT NOT NULL REFERENCES dvobject(id),
+          dvobject_id BIGINT REFERENCES dvobject(id),
+          content TEXT,
+          type VARCHAR(255) NOT NULL DEFAULT 'custom',
+          imagefilename VARCHAR(255),
+          displayorder INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE INDEX idx_dataversefeatureditem_displayorder ON dataversefeatureditem(displayorder);
+  when: not featureditem_check.query_result[0].table_exists
+
+- name: Check if storagequota table exists
+  community.postgresql.postgresql_query:
+    login_host: '{{ db.postgres.host | default("localhost") }}'
+    login_port: '{{ db.postgres.port | default(5432) }}'
+    login_user: '{{ db.postgres.user }}'
+    login_password: '{{ db.postgres.pass }}'
+    db: '{{ db.postgres.name }}'
+    query: >
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'storagequota'
+      ) as table_exists;
+  register: storagequota_check
+
+- name: Create storagequota table (required for search API in 6.x)
+  community.postgresql.postgresql_query:
+    login_host: '{{ db.postgres.host | default("localhost") }}'
+    login_port: '{{ db.postgres.port | default(5432) }}'
+    login_user: '{{ db.postgres.user }}'
+    login_password: '{{ db.postgres.pass }}'
+    db: '{{ db.postgres.name }}'
+    query: |
+      CREATE TABLE storagequota (
+          id SERIAL PRIMARY KEY,
+          allocation BIGINT,
+          definitionpoint_id BIGINT UNIQUE REFERENCES dvobject(id)
+      );
+  when: not storagequota_check.query_result[0].table_exists
+
+- name: Check if retention table exists
+  community.postgresql.postgresql_query:
+    login_host: '{{ db.postgres.host | default("localhost") }}'
+    login_port: '{{ db.postgres.port | default(5432) }}'
+    login_user: '{{ db.postgres.user }}'
+    login_password: '{{ db.postgres.pass }}'
+    db: '{{ db.postgres.name }}'
+    query: >
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'retention'
+      ) as table_exists;
+  register: retention_check
+
+- name: Create retention table (required for dataset API in 6.x)
+  community.postgresql.postgresql_query:
+    login_host: '{{ db.postgres.host | default("localhost") }}'
+    login_port: '{{ db.postgres.port | default(5432) }}'
+    login_user: '{{ db.postgres.user }}'
+    login_password: '{{ db.postgres.pass }}'
+    db: '{{ db.postgres.name }}'
+    query: |
+      CREATE TABLE retention (
+          id SERIAL PRIMARY KEY,
+          datasetversion_id BIGINT REFERENCES datasetversion(id),
+          dateunavailable TIMESTAMP,
+          reason TEXT
+      );
+  when: not retention_check.query_result[0].table_exists
+
+- name: Report migration table status
+  ansible.builtin.debug:
+    msg: |
+      Migration JPA Tables Status:
+      - storageuse: {{ 'already existed' if storageuse_check.query_result[0].table_exists else 'CREATED' }}
+      - datasettype: {{ 'already existed' if datasettype_check.query_result[0].table_exists else 'CREATED' }}
+      - makedatacountprocessstate: {{ 'already existed' if mdc_check.query_result[0].table_exists else 'CREATED' }}
+      - dataversefeatureditem: {{ 'already existed' if featureditem_check.query_result[0].table_exists else 'CREATED' }}
+      - storagequota: {{ 'already existed' if storagequota_check.query_result[0].table_exists else 'CREATED' }}
+      - retention: {{ 'already existed' if retention_check.query_result[0].table_exists else 'CREATED' }}

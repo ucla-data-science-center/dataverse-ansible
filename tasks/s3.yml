@@ -17,6 +17,7 @@
     owner: '{{ dataverse.payara.user }}'
     group: '{{ dataverse.payara.group }}'
     mode: '0600'
+  when: not (s3.use_iam_role | default(false))
 
 - name: place aws config
   template:

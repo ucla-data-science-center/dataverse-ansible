@@ -1,0 +1,6 @@
+---
+- name: patch install.py to disable JPA DDL during deploy
+  replace:
+    path: /tmp/dvinstall/install.py
+    regexp: 'returnCode = subprocess.call\(\[asadmincmd, "deploy", warfile\]\)'
+    replace: 'returnCode = subprocess.call([asadmincmd, "deploy", "--property", "eclipselink.ddl-generation=none", warfile])'

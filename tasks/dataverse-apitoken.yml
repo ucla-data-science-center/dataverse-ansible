@@ -1,10 +1,16 @@
 ---
 
+- name: debug db.postgres values
+  debug:
+    msg: "Connecting to PostgreSQL at {{ db.postgres.host }}:{{ db.postgres.port }} as {{ db.postgres.user }}"
+
 - name: get initial admin API token
   community.postgresql.postgresql_query:
-    db: '{{ db.postgres.name }}'
+    login_host: '{{ db.postgres.host }}'
+    login_port: '{{ db.postgres.port }}'
     login_user: '{{ db.postgres.user }}'
     login_password: '{{ db.postgres.pass }}'
+    db: '{{ db.postgres.name }}'
     query: select tokenstring from apitoken where authenticateduser_id = '1'
   register: query_result
 

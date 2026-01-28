@@ -1,0 +1,98 @@
+---
+# dataverse-ansible/tasks/migration-logos.yml
+#
+# Migrate sub-dataverse logos from production
+#
+# Sub-dataverse logos are user-uploaded files stored in:
+#   /usr/local/payara6/glassfish/domains/domain1/docroot/logos/{dataverse_id}/
+#
+# These are NOT handled by normal branding deployment - they must be migrated
+# from production during 5.x to 6.x migration.
+#
+# Setup:
+#   1. On production, create tarball:
+#      cd /usr/local/payara-5.2022.4/glassfish/domains/domain1/docroot
+#      tar -czf logos.tar.gz logos/
+#
+#   2. Extract to this repo:
+#      cd dataverse-ansible/files/migration
+#      tar -xzf logos.tar.gz
+#
+#   3. Commit the logos directory to the repo
+#
+#   4. Set in group_vars:
+#      migration:
+#        logos:
+#          enabled: true
+#
+# The logos directory structure is:
+#   files/migration/logos/
+#   ├── navbar/           # Main navbar logo (if customized)
+#   ├── 2/                # Dataverse ID 2's logo
+#   ├── 3/                # Dataverse ID 3's logo
+#   └── ...
+
+- name: Check if migration logos are enabled
+  debug:
+    msg: "Migration logos enabled: {{ migration.logos.enabled | default(false) }}"
+
+- name: Set logos paths
+  set_fact:
+    logos_src_path: "{{ playbook_dir }}/files/migration/logos"
+    logos_dest_path: "{{ payara_dir }}/glassfish/domains/{{ dataverse.payara.domain }}/docroot/logos"
+  when: migration.logos.enabled | default(false)
+
+- name: Check if logos source directory exists
+  stat:
+    path: "{{ logos_src_path }}"
+  register: logos_src_stat
+  when: migration.logos.enabled | default(false)
+
+- name: Fail if logos directory not found in repo
+  fail:
+    msg: |
+      Logos directory not found at {{ logos_src_path }}
+
+      To set up logos migration:
+      1. On production, create tarball:
+         cd /usr/local/payara-5.2022.4/glassfish/domains/domain1/docroot
+         tar -czf logos.tar.gz logos/
+
+      2. Copy to your local machine and extract to repo:
+         cd dataverse-ansible/files/migration
+         tar -xzf logos.tar.gz
+
+      3. Commit the logos directory
+  when:
+    - migration.logos.enabled | default(false)
+    - not logos_src_stat.stat.exists | default(false)
+
+- name: Create logos destination directory
+  file:
+    path: "{{ logos_dest_path }}"
+    state: directory
+    owner: "{{ dataverse.payara.user }}"
+    group: "{{ dataverse.payara.group }}"
+    mode: '0755'
+  when:
+    - migration.logos.enabled | default(false)
+    - logos_src_stat.stat.exists | default(false)
+
+- name: Copy logos from repo to server
+  copy:
+    src: "{{ logos_src_path }}/"
+    dest: "{{ logos_dest_path }}/"
+    owner: "{{ dataverse.payara.user }}"
+    group: "{{ dataverse.payara.group }}"
+    mode: '0644'
+    directory_mode: '0755'
+  when:
+    - migration.logos.enabled | default(false)
+    - logos_src_stat.stat.exists | default(false)
+
+- name: Report logos migration status
+  debug:
+    msg: "Sub-dataverse logos deployed from {{ logos_src_path }} to {{ logos_dest_path }}"
+  when:
+    - migration.logos.enabled | default(false)
+    - logos_src_stat.stat.exists | default(false)

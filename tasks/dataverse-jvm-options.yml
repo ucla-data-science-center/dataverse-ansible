@@ -1,0 +1,17 @@
+---
+- name: configure custom jvm options
+  block:
+    - name: check existing jvm options
+      shell: "{{ payara_dir }}/bin/asadmin list-jvm-options"
+      register: existing_jvm_opts
+      changed_when: false
+      check_mode: no
+
+    - name: create jvm options
+      shell: "{{ payara_dir }}/bin/asadmin create-jvm-options '\\{{ item }}'"
+      loop: "{{ dataverse_jvm_options }}"
+      # Simple string match might fail if output has formatting, but usually works for simple options
+      # We escape special characters in regex just in case, but 'item' here is the full string
+      when: item not in existing_jvm_opts.stdout
+      notify: enable and restart payara
+  when: dataverse_jvm_options is defined

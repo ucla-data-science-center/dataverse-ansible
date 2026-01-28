@@ -1,0 +1,38 @@
+---
+- name: check if persistence.xml patch is needed
+  shell: >
+    unzip -p /tmp/dvinstall/dataverse.war WEB-INF/classes/META-INF/persistence.xml | grep 'value="create-tables"'
+  register: persistence_check
+  ignore_errors: yes
+  changed_when: false
+
+- name: patch persistence.xml to disable ddl generation
+  block:
+    - name: create temporary build directory
+      file:
+        path: /tmp/dvinstall/war_build
+        state: directory
+        mode: 0755
+
+    - name: explode war file
+      unarchive:
+        src: /tmp/dvinstall/dataverse.war
+        dest: /tmp/dvinstall/war_build
+        remote_src: yes
+
+    - name: replace create-tables with none
+      replace:
+        path: /tmp/dvinstall/war_build/WEB-INF/classes/META-INF/persistence.xml
+        regexp: 'value="create-tables"'
+        replace: 'value="none"'
+
+    - name: repackage war file using jar
+      shell: "jar cvf /tmp/dvinstall/dataverse.war -C /tmp/dvinstall/war_build ."
+      args:
+        chdir: /tmp/dvinstall
+
+    - name: clean up build directory
+      file:
+        path: /tmp/dvinstall/war_build
+        state: absent
+  when: persistence_check.rc == 0

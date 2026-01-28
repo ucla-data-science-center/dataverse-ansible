@@ -1,0 +1,7 @@
+---
+- name: Test role loading
+  hosts: all
+  become: yes
+  roles:
+    - role: .
+

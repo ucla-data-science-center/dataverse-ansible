@@ -5,6 +5,10 @@
   debug:
     msg: '##### BEGIN ANSIBLE ROLE #####'
 
+- ansible.builtin.import_tasks: terraform_bridge.yml
+  tags:
+  - always
+
 - ansible.builtin.import_tasks: sanity-checks.yml
   tags:
   - prereqs
@@ -53,6 +57,18 @@
   when: db.postgres.enabled == True
   tags:
   - postgres
+
+- ansible.builtin.import_tasks: migration-jpa-tables.yml
+  when: migration.create_jpa_tables | default(false)
+  tags:
+  - migration
+  - jpa-tables
+
+- ansible.builtin.import_tasks: migration-logos.yml
+  when: migration.logos.enabled | default(false)
+  tags:
+  - migration
+  - logos
 
 - ansible.builtin.import_tasks: dataverse-branch.yml
   when: dataverse_branch != "release"

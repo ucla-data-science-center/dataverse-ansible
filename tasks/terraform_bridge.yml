@@ -1,0 +1,19 @@
+---
+# tasks/terraform_bridge.yml
+# Bridges Terraform outputs (host vars) to Ansible role variables
+
+- name: "Bridge Terraform dataverse_s3_bucket to s3.bucket_name"
+  set_fact:
+    s3: "{{ s3 | combine({'bucket_name': dataverse_s3_bucket, 'enabled': true}, recursive=True) }}"
+  when: 
+    - dataverse_s3_bucket is defined
+    - dataverse_s3_bucket | length > 0
+  tags: always
+
+- name: "Bridge Terraform aws_region to s3.region"
+  set_fact:
+    s3: "{{ s3 | combine({'region': aws_region}, recursive=True) }}"
+  when: 
+    - aws_region is defined
+    - aws_region | length > 0
+  tags: always

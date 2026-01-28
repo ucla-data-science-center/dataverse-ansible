@@ -1,6 +1,6 @@
-# CLAUDE.md
+# context.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI assistants when working with code in this repository.
 
 ## Project Overview
 
@@ -115,23 +115,14 @@ ansible-playbook --connection=local -i inventory dataverse.pb -e "@defaults/main
 | PostgreSQL | `/var/lib/pgsql/*/data/` | `systemctl {start\|stop\|restart} postgresql-*` |
 | Solr | `/usr/local/solr` | `systemctl {start\|stop\|restart} solr` |
 
-### Task Execution Flow
+## Migration & Environment Documentation
 
-The role follows this high-level sequence (see `tasks/main.yml` for complete order):
+For major version upgrades and multi-environment configuration, refer to these guides:
 
-1. **Sanity checks** - Validate environment
-2. **Prerequisites** - Install system packages, configure firewall/SELinux
-3. **Apache** - Install and configure reverse proxy
-4. **PostgreSQL** - Install, initialize database, create users/schemas
-5. **Dataverse source** - Clone/checkout repository (if building from source)
-6. **Payara** - Install application server, configure JVM settings
-7. **Solr** - Install and configure search index
-8. **S3/Storage** - Configure storage backend (local/S3/MinIO/localstack)
-9. **Dataverse installation** - Run the Dataverse installer
-10. **Post-install** - Configure API settings, metadata blocks, authentication
-11. **Optional features** - Shibboleth, sample data, previewers, external tools
+- **[Dataverse 5.14 to 6.8 Upgrade Strategy](docs/operations/upgrade_path_5x_to_6x.md)**: Detailed step-by-step for "Parallel Deployment" and Flyway migration.
+- **[Environment Configuration Best Practices](docs/setup/environment_configuration.md)**: How to manage `group_vars`, Terraform integration, and RDS.
 
-### Configuration Architecture
+## Configuration Architecture
 
 **Configuration hierarchy** (highest precedence first):
 1. Extra vars passed with `-e` at runtime

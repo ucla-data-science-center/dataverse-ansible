@@ -1,0 +1,403 @@
+# group_vars/test.yml
+# Test environment configuration for Dataverse 6.8 migration testing
+# Uses external AWS RDS PostgreSQL instead of local PostgreSQL
+#
+# This file is used with inventory from: terraform-dataverse/environments/jamie/inventory-test.yml
+#
+# =============================================================================
+# TWO-STAGE DEPLOYMENT PROCESS
+# =============================================================================
+# Stage 1: Run with letsencrypt.enabled: true (certificate will be obtained)
+# Stage 2: On subsequent runs, SSL config is rendered automatically
+# =============================================================================
+
+---
+# =============================================================================
+# REQUIRED VARIABLES (checked by site.yml pre_tasks)
+# =============================================================================
+dataverse_hostname: "test.ucladataverse.dev"
+dataverse_adminpass: "CHANGE_ME_USE_VAULT"  # TODO: ansible-vault encrypt_string
+dataverse_postgresql_password: "CHANGE_ME_USE_VAULT"  # TODO: ansible-vault encrypt_string
+
+# Additional top-level variables referenced by the role
+dataverse_siteurl: "https://test.ucladataverse.dev"
+dataverse_adminemail: "admin@test.dataverse.ucla.edu"
+servername: "test.ucladataverse.dev"
+any_errors_fatal: true
+
+# =============================================================================
+# DATABASE CONFIGURATION - External RDS
+# =============================================================================
+# NOTE: Update the RDS endpoint after running terraform apply
+db:
+  use_rds: true
+  postgres:
+    enabled: false  # CRITICAL: Do NOT install local PostgreSQL
+    name: dvndb
+    user: postgres
+    pass: "{{ dataverse_postgresql_password }}"
+    adminpass: "{{ dataverse_postgresql_password }}"
+    host: "PLACEHOLDER-UPDATE-AFTER-TERRAFORM"  # e.g., test-dataverse-db.xxxx.us-west-2.rds.amazonaws.com
+    port: 5432
+    version: 16
+    jdbcurl:
+    log_lock_waits: true
+    log_statements: all  # Enable for debugging in test
+    query_counts: false
+    replication:
+      enabled: false
+      servers: []
+  backups:
+    enabled: false
+
+# =============================================================================
+# MIGRATION CONFIGURATION
+# =============================================================================
+# Enable this when migrating from 5.x to 6.x to create missing JPA tables
+migration:
+  create_jpa_tables: true
+
+# =============================================================================
+# DATAVERSE CONFIGURATION
+# =============================================================================
+dataverse:
+  version: '6.8'
+  adminpass: "{{ dataverse_adminpass }}"
+  allow_signups: true
+  thumbnails: false
+  srcdir: /opt/dataverse/dataverse
+  uploads_dir: /tmp
+  usermgmtkey: burrito
+  service_email: noreply@test.dataverse.ucla.edu
+  smtp: localhost
+  memheap: 4096
+  file_fixity_checksum_algorithm: "MD5"
+  google_analytics_key:
+  copyright: "UC Regents"
+
+  # UCLA Branding
+  branding:
+    enabled: true
+    directory: "{{ playbook_dir }}/files/branding"
+    favicons_directory: "{{ playbook_dir }}/files/favicons"
+    support_url: "https://uclalibrary.atlassian.net/servicedesk/customer/portal/5/group/13/create/46"
+    fileSettings:
+      - setting: HeaderCustomizationFile
+        file: custom-header.html
+      - setting: StyleCustomizationFile
+        file: custom-stylesheet.css
+      - setting: LogoCustomizationFile
+        file: dataverseUCLA_logo.png
+      - setting: HomePageCustomizationFile
+        file: custom-homepage.html
+      - setting: FooterCustomizationFile
+        file: custom-footer.html
+    otherSettings:
+      - setting: FooterCopyright
+        value: " UC Regents"
+      - setting: InstallationName
+        value: "UCLA Dataverse (TEST)"
+
+  # Root dataverse
+  root:
+    name: "UCLA Dataverse (TEST)"
+    affiliation: "UCLA Library"
+    description: "TEST ENVIRONMENT - UCLA Dataverse is a repository for research data."
+
+  # Language packs
+  language:
+    enabled: true
+    languages:
+      - locale: en_US
+        title: English
+      - locale: es_ES
+        title: Spanish
+      - locale: zh_CN
+        title: Chinese (Simplified)
+      - locale: ja_JP
+        title: Japanese
+      - locale: ko_KR
+        title: Korean
+    language_packs:
+      source: https://github.com/GlobalDataverseCommunityConsortium/dataverse-language-packs.git
+      version: develop
+    lang_directory: "/opt/dv/lang"
+
+  # Licenses
+  licenses:
+    enabled: true
+    user: dataverseAdmin
+    licenses:
+      - name: CC0 1.0
+        uri: http://creativecommons.org/publicdomain/zero/1.0
+        shortDescription: Creative Commons CC0 1.0 Universal Public Domain Dedication.
+        iconUrl: https://licensebuttons.net/p/zero/1.0/88x31.png
+        active: true
+        sortOrder: 1
+      - name: CC BY 4.0
+        uri: http://creativecommons.org/licenses/by/4.0
+        shortDescription: Creative Commons Attribution 4.0 International License.
+        iconUrl: https://licensebuttons.net/l/by/4.0/88x31.png
+        active: true
+        sortOrder: 2
+
+  # Previewers
+  previewers:
+    enabled: true
+    on_same_server: true
+    zip_url: https://github.com/gdcc/dataverse-previewers/releases/download/1.2/dataverse-previewers-1.2.zip
+    dir: /var/www/html
+
+  # API
+  api:
+    test_suite: false
+    allow_lookup: true
+    blocked_endpoints: "builtin-users,test"
+    blocked_policy: ""
+    location: "http://localhost:8080/api"
+
+  # JaCoCo
+  jacoco:
+    enabled: false
+    home: /tmp/jacoco
+    version: 0.8.12
+
+  # Sample data - Disabled for migration test (importing production database)
+  sampledata:
+    enabled: false
+    use_api: true
+    collection_name: "UCLA Data Science Center"
+    collection_alias: "ucla-dsc"
+    collection_description: "Research data from the UCLA Library Data Science Center."
+    contact_email: "datascience@library.ucla.edu"
+    affiliation: "UCLA Library"
+    dir: /tmp/sampledata
+    repo: https://github.com/IQSS/dataverse-sample-data.git
+    branch: master
+    venv: /tmp/sampledata/venv
+
+  # Custom sample data
+  custom_sampledata:
+    enabled: false
+    custom_sampledir: "{{ playbook_dir }}/custom_sampledata"
+    custom_sampledatasets: "{{ playbook_dir }}/custom_sampledata/datasets"
+    custom_sampledataverses: "{{ playbook_dir }}/custom_sampledata/dataverses"
+    custom_sampleusers: "{{ playbook_dir }}/custom_sampledata/users"
+    custom_samplefiles: "{{ playbook_dir }}/custom_sampledata/files"
+
+  # Custom metadata blocks
+  custom_metadata_blocks:
+    enabled: true
+    urls:
+      - https://github.com/IQSS/dataverse/files/3744336/codemeta.tsv.txt
+      - https://raw.githubusercontent.com/ucla-data-science-center/dataverse-custom-metadata/main/helada3.tsv
+      - https://raw.githubusercontent.com/IQSS/dataverse/develop/scripts/api/data/metadatablocks/geospatial.tsv
+      - https://raw.githubusercontent.com/IQSS/dataverse/develop/scripts/api/data/metadatablocks/social_science.tsv
+      - https://raw.githubusercontent.com/IQSS/dataverse/develop/scripts/api/data/metadatablocks/astrophysics.tsv
+      - https://raw.githubusercontent.com/IQSS/dataverse/develop/scripts/api/data/metadatablocks/biomedical.tsv
+      - https://raw.githubusercontent.com/IQSS/dataverse/develop/scripts/api/data/metadatablocks/journals.tsv
+
+  # Unit tests
+  unittests:
+    enabled: false
+    argument: '-DcompilerArgument=-Xlint:unchecked test -P all-unit-tests'
+
+  # Options
+  options:
+    filepids:
+    maxfileuploadsizeinbytes:
+    provcollectionenabled:
+    tabularingestsizelimit:
+
+  # Default storage - use S3
+  default:
+    config:
+    storage_id: s3
+
+  demo: false
+
+  # Deployment
+  deployment:
+    upgrade_only: false
+
+  # File storage - keep local as fallback, but S3 is primary
+  filesdirs:
+    - label: file
+      path: /usr/local/dvn/data
+
+  # PIDs - FAKE provider for testing (won't mint real DOIs)
+  pid:
+    authority: "10.5072"
+    protocol: doi
+    shoulder: "FK2/"
+
+  # DOI - FAKE provider for testing
+  doi:
+    baseurl: "https://mds.test.datacite.org/"
+    dataciterestapiurl: "https://api.test.datacite.org"
+    mdcbaseurl: "https://api.test.datacite.org/"
+    provider: FAKE
+    username: "testaccount"
+    password: "notmypassword"
+
+  # Frontend (SPA)
+  frontend:
+    enabled: false
+    branch: develop
+    docroot:
+      base: /var/www/html
+      dir: spa
+    nodejs:
+      version: 18
+    repo: "http://github.com/IQSS/dataverse-frontend"
+    srcdir: /tmp/dataverse-frontend
+
+  # External tools
+  externaltools:
+    datacurationtool:
+      enabled: false
+      method: demo
+    dataexplorer:
+      enabled: true
+    wholetale:
+      enabled: false
+
+  # Harvest clients
+  harvest_clients: []
+
+  # Handle.net
+  handlenet:
+    independenthandleservice: 'false'
+    admcredfile: "/opt/dv/admpriv.bin"
+    admcredfile_source: files/handlenet/admcredfile
+
+  # Counter/Make Data Count
+  counter:
+    enabled: false
+
+  # Solr
+  solr:
+    download_url: "https://archive.apache.org/dist/solr/solr/9.8.0/solr-9.8.0.tgz"
+    group: solr
+    root: /usr/local/solr
+    user: solr
+    version: 9.8.0
+    listen: 127.0.0.1
+    checksum: sha256:9948dcf798c196b834c4cbb420d1ea5995479431669d266c33d46548b67e69e1
+
+  # Payara
+  payara:
+    user: dataverse
+    group: dataverse
+    domain: domain1
+    logformat: ulf
+    adminuser: admin
+    adminpass: notPr0d
+    siteurl: "https://test.ucladataverse.dev"
+    listen_address: 127.0.0.1
+    launch_timeout: 180
+    request_timeout: 1800
+    root: /usr/local
+    dir: payara6
+    zipurl: https://nexus.payara.fish/repository/payara-community/fish/payara/distributions/payara/6.2025.3/payara-6.2025.3.zip
+    zipchecksum: sha256:88f5c1e5b40ea4bc60ae3e34e6858c1b33145dc06c4b05c3d318ed67c131e210
+
+# =============================================================================
+# APACHE CONFIGURATION
+# =============================================================================
+apache:
+  enabled: true
+  port: 80
+  public_fqdn: "test.ucladataverse.dev"
+  ssl:
+    enabled: true
+    port: 443
+    cert: ""
+    key: ""
+    interm: ""
+    remote_cert: false
+    pem:
+      cert: ""
+  behind_ssl_reverse_proxy: false
+  block:
+    admin: false  # Allow admin API for testing
+    destroy: false  # Allow destroy for testing
+    builtin_users: false  # Allow builtin users for testing
+    sword: false
+  use_ajp: true
+
+letsencrypt:
+  enabled: true
+  certbot:
+    user: certbot
+    email: jjamison@library.ucla.edu  # Update with Jamie's email
+    test_cert: false
+    autorenew: true
+
+# =============================================================================
+# ADDITIONAL SERVICES
+# =============================================================================
+prometheus:
+  install: false
+
+schemaspy:
+  enabled: false
+
+shibboleth:
+  enabled: false
+
+rserve:
+  install: false
+  host: localhost
+  port: 6311
+  user: rserve
+  group: rserve
+  pass: rserve
+  workdir: /tmp/Rserv
+
+postfix:
+  enabled: true
+
+sshkeys:
+  enabled: false
+
+# =============================================================================
+# S3 STORAGE - Using IAM Instance Profile for authentication
+# =============================================================================
+# NOTE: Update bucket_name after running terraform apply
+s3:
+  enabled: true
+  # Use IAM instance profile for authentication (EC2 has role attached via Terraform)
+  use_iam_role: true
+  access_key: ""
+  secret_access_key: ""
+  # Bucket created by Terraform (update from inventory: dataverse_s3_bucket)
+  bucket_name: "PLACEHOLDER-UPDATE-AFTER-TERRAFORM"
+  region: "us-west-2"
+  location_constraint: "us-west-2"
+  # S3 storage configuration
+  storage_driver_id: s3
+  files_type: s3
+  label: "s3-storage"
+  # Direct upload/download (requires CORS)
+  download_redirect: true
+  upload_redirect: true
+  cors_already_set: false
+  create_bucket: false  # Bucket already created by Terraform
+  custom_endpoint_url: ""
+  path_style_access: false  # Use virtual-hosted style for real AWS S3
+  url_expiration_minutes: 60
+  payload_signing: false
+  chunked_encoding: true
+
+# =============================================================================
+# MIGRATION SETTINGS - For 5.x to 6.x migration
+# =============================================================================
+migration:
+  # Create missing JPA tables before Flyway migration
+  create_jpa_tables: true
+
+  # Sub-dataverse logos migration
+  # Copies logos from files/migration/logos/ to Payara docroot
+  logos:
+    enabled: true
