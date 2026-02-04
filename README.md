@@ -1,5 +1,7 @@
 # Dataverse Ansible role
 
+> ⚠️ **Note for UCLA Dataverse Infrastructure:** This repository is managed by the [parent infrastructure repository](../README.md). Please refer to that repository for the standard deployment workflow using `make` commands. The instructions below are for standalone development.
+
 This [Ansible][ansible] role aims to install [Dataverse][dataverse] and its prerequisites.
 The role installs Apache, PostgreSQL, GlassFish/Payara and other prerequisites, then deploys Dataverse.
 
@@ -57,8 +59,6 @@ Certbot will automatically:
 - Configure Apache VirtualHost for HTTPS
 - Set up HTTP→HTTPS redirect
 - Enable automatic certificate renewal
-
-**See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for complete step-by-step instructions.**
 
 #### Other certificates
 If you need to set particular certificates, for instance if your organization already has prepared this for you we need to modify the following parameters:
