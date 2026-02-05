@@ -9,8 +9,20 @@
 # REQUIRED VARIABLES (checked by site.yml pre_tasks)
 # =============================================================================
 dataverse_hostname: "staging.ucladataverse.dev"
-dataverse_adminpass: "admin1"
-dataverse_postgresql_password: "La0dicia14"
+dataverse_adminpass: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          61626633376333653337323536393531356635633237343636336234383937383637643232326366
+          6138303434663833313432373539633234323731356561620a646262313131366634333631303535
+          66613539303633663932396633323361393662383231613763643065633561356332643239373663
+          6463643838333265380a656138343665616265393732643866343539626633373261623839653365
+          6462
+dataverse_postgresql_password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          36623631613337376134316462613265636339323830656262333437336564663033336633343937
+          3436303432333238323034316139346634653535613835300a383837666239633361343237333332
+          63313036363765366137316130363536613638336438623336356261623164663838643036653834
+          6537373639383136380a663530376138306534386631613665383466346162393639366163643862
+          3735
 
 # Additional top-level variables referenced by the role
 dataverse_siteurl: "https://staging.ucladataverse.dev"
@@ -28,7 +40,7 @@ db:
     user: postgres
     pass: "{{ dataverse_postgresql_password }}"
     adminpass: "{{ dataverse_postgresql_password }}"
-    host: "dev-dataverse-db.cb4k4a6gqn27.us-west-2.rds.amazonaws.com"
+    host: "{{ db_host }}"
     port: 5432
     version: 16
     jdbcurl:
@@ -46,7 +58,7 @@ db:
 # =============================================================================
 dataverse:
   version: '6.8'
-  adminpass: "admin1"  # Change this for real testing
+  adminpass: "{{ dataverse_adminpass }}"
   allow_signups: true
   thumbnails: false
   srcdir: /opt/dataverse/dataverse
@@ -367,7 +379,7 @@ s3:
   access_key: ""
   secret_access_key: ""
   # Bucket created by Terraform (from inventory: dataverse_s3_bucket)
-  bucket_name: "tim-dataverse-dev-storage-20260124000424566000000002"
+  bucket_name: "{{ dataverse_s3_bucket }}"
   region: "us-west-2"
   location_constraint: "us-west-2"
   # S3 storage configuration

@@ -8,6 +8,9 @@ inventory_ec2
 
 ### ucla local
 
+# Vault password file (never commit)
+.vault-password
+
 # uv virtual environment
 .venv/
 
