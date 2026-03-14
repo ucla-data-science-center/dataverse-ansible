@@ -72,6 +72,8 @@ class TestJPATables:
         "datasettype",
         "makedatacountprocessstate",
         "dataversefeatureditem",
+        "storagequota",
+        "retention",
     ])
     def test_jpa_table_exists(self, db_connection, table_name):
         """Verify required JPA tables exist."""
