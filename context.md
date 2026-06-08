@@ -111,16 +111,15 @@ ansible-playbook --connection=local -i inventory dataverse.pb -e "@defaults/main
 | Component | Location | Service Control |
 |-----------|----------|-----------------|
 | Apache httpd | `/etc/httpd/conf.d` | `systemctl {start\|stop\|restart} httpd` |
-| Payara (GlassFish) | `/usr/local/payara5` | `systemctl {start\|stop\|restart} payara` |
+| Payara (GlassFish) | `/usr/local/payara6` | `systemctl {start\|stop\|restart} payara` |
 | PostgreSQL | `/var/lib/pgsql/*/data/` | `systemctl {start\|stop\|restart} postgresql-*` |
 | Solr | `/usr/local/solr` | `systemctl {start\|stop\|restart} solr` |
 
 ## Migration & Environment Documentation
 
-For major version upgrades and multi-environment configuration, refer to these guides:
+The active 5.14 to 6.8 migration is tracked in `.planning/` at the repo root (see `ROADMAP.md` for phase status and `PROJECT.md` for constraints and decisions). Detailed rollback and cutover procedures are in `docs/operations/migration_guide.md`.
 
-- **[Dataverse 5.14 to 6.8 Upgrade Strategy](docs/operations/upgrade_path_5x_to_6x.md)**: Detailed step-by-step for "Parallel Deployment" and Flyway migration.
-- **[Environment Configuration Best Practices](docs/setup/environment_configuration.md)**: How to manage `group_vars`, Terraform integration, and RDS.
+For environment configuration: [Environment Configuration Best Practices](docs/setup/environment_configuration.md).
 
 ## Configuration Architecture
 
@@ -195,7 +194,7 @@ The role auto-detects OS and includes appropriate task files (e.g., `postgres_re
 ## Troubleshooting
 
 ### Dataverse Installation Fails
-- Check `/usr/local/payara5/glassfish/domains/domain1/logs/server.log`
+- Check `/usr/local/payara6/glassfish/domains/domain1/logs/server.log`
 - Verify PostgreSQL is running: `systemctl status postgresql-*`
 - Ensure Solr is accessible: `curl http://localhost:8983/solr/`
 

@@ -1,30 +1,25 @@
 # UCLA Dataverse Ansible Documentation
 
-Welcome to the documentation for UCLA's fork of the Dataverse Ansible role.
+For the standard deployment workflow, start with the [parent infrastructure repo](../../README.md) and its [RUNBOOK](../../docs/RUNBOOK.md). The docs here are Ansible-specific.
 
-## 🚀 Quick Start
+## Setup
 
-- **[Team Guide](development/team_guide.md)** - Start here! Workflows, branching, and team practices.
-- **[Commands Reference](development/commands.md)** - Cheat sheet for Molecule, Docker, and Ansible commands.
+- **[Secrets Management](setup/secrets_management.md)** - How we use Ansible Vault: inline encrypt_string, `.vault-password`, and the dev.yml/test.yml structure.
+- **[Environment Configuration](setup/environment_configuration.md)** - group_vars strategy and Terraform integration.
+- **[Monitoring](setup/monitoring.md)** - CloudWatch setup.
 
-## 🏗️ Installation & Setup
+## Development
 
-- **[AWS Deployment Guide](setup/aws_deployment.md)** - Full guide for deploying to AWS EC2 (Staging/Production).
-- **[Configuration Strategy](setup/configuration.md)** - How we manage config for Local vs AWS environments.
-- **[Secrets Management](setup/secrets_management.md)** - Using Ansible Vault for credentials.
-- **[Monitoring](setup/monitoring.md)** - Setting up CloudWatch.
-
-## 🛠️ Development
-
-- **[Contributing Guide](development/contributing.md)** - Branching strategy and PR standards.
+- **[Commands Reference](development/commands.md)** - pytest, make targets, vault encrypt, API health checks.
+- **[Contributing](development/contributing.md)** - Branching strategy and PR standards.
+- **[Team Guide](development/team_guide.md)** - Team practices: branching, deploy checklist, upstream sync.
 - **[Fork Changelog](development/changelog.md)** - History of our improvements and fixes.
 - **[Upstream Contributions](development/upstream_contributions.md)** - Draft PRs for the upstream project.
 
-## 🔧 Operations & Maintenance
+## Operations
 
-- **[Troubleshooting](operations/troubleshooting.md)** - Common issues and fixes (Docker, SSL, Database).
-- **[Migration Guide (5.14 -> 6.8)](operations/migration_guide.md)** - Detailed plan for the 2025 upgrade.
-- **[Performance Tuning](operations/performance_tuning.md)** - Optimizing temp files and memory.
+- **[Troubleshooting](operations/troubleshooting.md)** - Common issues and fixes.
+- **[Migration Guide (5.14 to 6.8)](operations/migration_guide.md)** - Detailed cutover and rollback procedures. Current phase status is in `.planning/ROADMAP.md`.
 
 ---
 

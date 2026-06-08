@@ -1,5 +1,7 @@
 # Dataverse 5.14 → 6.8 Migration Guide
 
+> **Current migration status is tracked in `.planning/` at the repo root** — see `ROADMAP.md` for phase progress and `PROJECT.md` for active constraints and decisions. This document is the detailed reference for cutover procedures, rollback triggers, and post-migration tasks. It will feed directly into Phase 6 (Maintenance Window Planning).
+
 Complete migration guide for upgrading UCLA Dataverse from 5.14 to 6.8 on AWS.
 
 **Current Production:** dataverse.ucla.edu (Dataverse 5.14)
