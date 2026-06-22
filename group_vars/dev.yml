@@ -358,7 +358,7 @@ letsencrypt:
   certbot:
     user: certbot
     email: tdennis@library.ucla.edu
-    test_cert: false
+    test_cert: true  # staging certs during iterative rebuilds; flip to false only at production cutover (Phase 7)
     autorenew: true
 
 # =============================================================================
