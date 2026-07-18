@@ -331,7 +331,7 @@ letsencrypt:
   certbot:
     user: certbot
     email: jjamison@library.ucla.edu  # Update with Jamie's email
-    test_cert: false
+    test_cert: true  # staging certs during iterative rebuilds; flip to false only at production cutover (Phase 7)
     autorenew: true
 
 # =============================================================================
