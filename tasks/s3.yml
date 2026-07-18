@@ -69,6 +69,7 @@
     'aws s3api create-bucket --bucket {{ s3.bucket_name }} --create-bucket-configuration LocationConstraint={{ s3.location_constraint }} --region {{ s3.region }}'
   args:
     executable: /bin/bash
+  become: yes
   become_user: '{{ dataverse.payara.user }}'
   environment:
     PATH: "{{ lookup('env', 'PATH') }}:/usr/local/bin"
