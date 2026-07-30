@@ -113,6 +113,13 @@ a:focus {
     line-height: 1.6;
 }
 
+/* Inline links in body prose need a non-color cue (1.4.1 Use of Color) --
+   color alone doesn't distinguish them from surrounding text for users who
+   can't perceive the blue/gray hue difference. */
+#ucla-homepage .lead a {
+    text-decoration: underline;
+}
+
 /* Welcome wells */
 .leadContent .customWell {
     background-color: #FFFFFF;
@@ -159,6 +166,13 @@ a:focus {
     font-size: 16px;
     border: none;
     border-radius: 4px 0 0 4px;
+}
+
+/* This box sits on a dark blue gradient -- the global dark-blue focus outline
+   below would be invisible here, so use gold instead (3.43:1+ against both
+   gradient stops, well past the 3:1 non-text contrast minimum). */
+.uclaSearch .form-control:focus {
+    outline-color: #FFD100;
 }
 
 .uclaSearch .btn {
@@ -217,7 +231,7 @@ a:focus {
 }
 
 .featuredDataverses .panel-title a:hover {
-    color: #FFD100;
+    text-decoration: underline;
 }
 
 .featuredDataverses .panel-body {
@@ -282,7 +296,7 @@ table[id$='resultsTable'] td > div.datasetResult:hover {
 
 table[id$='resultsTable'] td > div.fileResult {
     border: 1px solid #E5E5E5;
-    border-left: 4px solid #8BB8E8;
+    border-left: 4px solid #418bda;
     border-radius: 4px;
     margin-bottom: 12px;
 }
@@ -311,9 +325,15 @@ table[id$='resultsTable'] td > div.fileResult {
    Forms
    ========================================================================== */
 
+/* Global focus indicator: was a 15%-opacity box-shadow that composited to
+   near-invisible on both white and blue backgrounds (1.4.11 Non-text
+   Contrast failure, ~1.15:1). Solid outline is opaque and doesn't depend
+   on what's behind it. #003B5C on white = 11.8:1, clears both the 3:1
+   non-text minimum and the 4.5:1 text minimum with room to spare. */
 .form-control:focus {
     border-color: #2774AE;
-    box-shadow: 0 0 0 3px rgba(39, 116, 174, 0.15);
+    outline: 2px solid #003B5C;
+    outline-offset: 1px;
 }
 
 /* ==========================================================================
@@ -363,6 +383,9 @@ footer#dvfooter {
    ========================================================================== */
 
 .ucla-blue { color: #2774AE; }
+/* Dark-background use only -- #FFD100 text on white/light backgrounds is
+   ~1.5:1, a severe contrast failure. Safe on #2774AE/#003B5C (this file's
+   dark blues), not safe elsewhere. */
 .ucla-gold { color: #FFD100; }
 .ucla-dark-blue { color: #003B5C; }
 .bg-ucla-blue { background-color: #2774AE; color: #FFFFFF; }
