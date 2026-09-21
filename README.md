@@ -1,6 +1,10 @@
 # Dataverse Ansible role
 
-> ⚠️ **Note for UCLA Dataverse Infrastructure:** This repository is managed by the [parent infrastructure repository](../README.md). Please refer to that repository for the standard deployment workflow using `make` commands. The instructions below are for standalone development.
+> ⚠️ **Note for UCLA Dataverse Infrastructure:** This repository is managed by the [dataverse-infrastructure](https://github.com/ucla-data-science-center/dataverse-infrastructure) parent repo. For the standard deployment workflow using `make` commands, start there.
+>
+> **UCLA-specific docs:** [docs/INDEX.md](docs/INDEX.md) covers secrets management, environment configuration, commands reference, troubleshooting, and migration guides.
+>
+> The instructions below are for standalone development.
 
 This [Ansible][ansible] role aims to install [Dataverse][dataverse] and its prerequisites.
 The role installs Apache, PostgreSQL, GlassFish/Payara and other prerequisites, then deploys Dataverse.
@@ -199,3 +203,4 @@ This is a community effort, written primarily by [Don Sizemore][donsizemore]. Th
 [vagrant]: https://www.vagrantup.com
 [virtualbox]: https://www.virtualbox.org
 [wholetale]: https://wholetale.org/
+
